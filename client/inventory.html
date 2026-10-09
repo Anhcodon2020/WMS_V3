@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+      :root { --bg: #f3f6fb; --panel: #fff; --border: #dfe7f5; --text: #14213d; --muted: #5b6b8a; --primary: #2563eb; --danger: #b91c1c; }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--text); font-family: Inter, 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #edf4ff, #f8fafc); }
+      .shell { display: flex; min-height: 100vh; }
+      aside { width: 240px; padding: 22px 16px; color: #e2e8f0; background: linear-gradient(180deg, #101c38, #16284a); }
+      .brand { display: flex; align-items: center; gap: 12px; padding: 8px 10px 18px; border-bottom: 1px solid #ffffff2e; font-weight: 700; }
+      .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #2563eb; }
+      nav { display: grid; gap: 8px; margin-top: 18px; }
+      nav a { padding: 11px 12px; border-radius: 12px; color: #dfeafc; text-decoration: none; font-weight: 600; }
+      nav a.active, nav a:hover { color: #fff; background: #60a5fa2e; }
+      main { flex: 1; padding: 30px 24px 40px; min-width: 0; }
+      .page { max-width: 1500px; margin: auto; }
+      .topbar, .card-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+      h1, h2 { margin: 0; } h1 { font-size: 2rem; } h2 { font-size: 1.15rem; }
+      .muted { color: var(--muted); }
+      .card { margin-top: 20px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--panel); box-shadow: 0 10px 30px #0f172a14; }
+      .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+      label { display: grid; gap: 7px; color: var(--muted); font-size: .88rem; font-weight: 600; }
+      input, select { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: #f8fafc; }
+      button { border: 0; border-radius: 9px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+      .primary { color: white; background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+      .ghost { color: var(--text); background: #edf2ff; }
+      .actions { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+      .notice { margin-top: 14px; padding: 10px 12px; border-radius: 9px; background: #ecfdf5; color: #065f46; }
+      .summary-tile { display: inline-block; min-width: 220px; margin-top: 16px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: #f8fafc; }
+      .summary-tile.overdue { color: #991b1b; border-color: #fca5a5; background: #fef2f2; }
+      .summary-tile .value { margin-top: 4px; font-size: 1.5rem; font-weight: 800; }
+      .table-wrap { overflow: auto; margin-top: 16px; }
+      table { width: 100%; min-width: 1000px; border-collapse: collapse; }
+      th, td { padding: 10px 9px; text-align: left; border-bottom: 1px solid #edf2f7; white-space: nowrap; }
+      th { color: var(--muted); background: #f8fafc; font-size: .78rem; text-transform: uppercase; }
+      @media (max-width: 900px) { aside { display: none; } main { padding: 20px 14px; } .controls { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 560px) { .controls { grid-template-columns: 1fr; } .topbar { align-items: flex-start; flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div>
+        <nav aria-label="Main navigation">
+          <a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a>
+          <a href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a>
+          <a href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a>
+          <a href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a>
+          <a href="pickinglist.html" target="_blank" rel="noopener noreferrer">📋 Picking List</a>
+          <a class="active" href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a>
+          <a href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a>
+          <a href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 BBR Report</a>
+          <a href="updateloc.html" target="_blank" rel="noopener noreferrer">📍 Update location</a>
+        </nav>
+      </aside>
+      <main>
+        <div class="page">
+          <header class="topbar">
+            <div><p class="muted">Warehouse Management System</p><h1>Inventory</h1></div>
+            <div class="actions">
+              <label class="primary" style="padding:10px 14px;border-radius:9px;cursor:pointer">Import Excel<input id="importFile" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+              <button class="primary" id="exportLocationBtn" type="button">Export vị trí</button>
+              <button class="ghost" id="refreshBtn" type="button">Làm mới</button>
+            </div>
+          </header>
+
+          <section class="card">
+            <div class="card-header"><h2>Import inventory</h2><span class="muted">Import sẽ xóa toàn bộ dữ liệu inventory hiện có</span></div>
+            <p class="muted">Cột Excel: D = SKU, O = Ngày nhận, AW = Qty nhận, AL = Parent PO, BR = Qty inventory. Dòng trùng AL + D + O sẽ gộp và cộng dồn BR.</p>
+            <div id="notice" class="notice" hidden></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header"><h2>Thống kê</h2></div>
+            <div class="summary-tile"><div class="muted">Tổng CBM tồn kho</div><div class="value" id="totalCbm">0.000</div></div>
+            <div class="summary-tile" id="overdueCbmCard"><div class="muted">Tổng CBM quá 14 ngày</div><div class="value" id="overdueCbm">0.000</div></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header"><h2>Tồn hiện có theo Parent PO + SKU</h2><span class="muted">Số lượng là tổng qty_inventory, không phải số Release Key</span></div>
+            <div class="controls">
+              <label>Tìm SKU<input id="searchSkuInput" placeholder="Nhập SKU..."></label>
+              <label>Tìm Parent PO<input id="searchParentPoInput" placeholder="Nhập Parent PO..."></label>
+              <label>Sắp xếp Due date<select id="dueDateSort"><option value="desc">Lâu nhất trước</option><option value="asc">Mới nhất trước</option></select></label>
+              <div class="actions"><button class="ghost" id="clearSearchBtn" type="button">Xóa tìm kiếm</button></div>
+            </div>
+            <div class="table-wrap">
+              <table style="min-width:500px">
+                <thead><tr><th>Parent PO</th><th>SKU</th><th>Qty inventory hiện có</th></tr></thead>
+                <tbody id="inventorySummaryBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header"><h2>Chi tiết tồn kho theo ngày nhập</h2></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Parent PO</th><th>SKU</th><th>Qty inventory</th><th>Qty nhận</th><th>Ngày nhận</th><th>Due date (ngày)</th><th>Ngày cập nhật</th><th>CBM đơn vị</th><th>Tổng CBM</th><th>Location</th><th>Thao tác</th></tr></thead>
+                <tbody id="inventoryBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005';
+      const $ = id => document.getElementById(id);
+      const notice = $('notice');
+      let inventoryRows = [];
+
+      function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }
+      function toDateOnly(value) {
+        if (value instanceof Date) {
+          if (isNaN(value.getTime())) return '';
+          return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+        }
+        return value ? String(value).slice(0, 10) : '';
+      }
+      function escapeHtml(value) {
+        const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return String(value ?? '').replace(/[&<>"']/g, character => escapes[character]);
+      }
+      function showNotice(message, error = false) { notice.hidden = false; notice.textContent = message; notice.style.background = error ? '#fef2f2' : '#ecfdf5'; notice.style.color = error ? '#b91c1c' : '#065f46'; }
+
+      function excelDateToISO(value) {
+        if (value instanceof Date) return isNaN(value.getTime()) ? '' : value.toISOString().slice(0, 10);
+        if (typeof value === 'number' && value > 0) {
+          const parsed = XLSX.SSF.parse_date_code(value);
+          return parsed ? `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}` : '';
+        }
+        const text = String(value || '').trim();
+        if (!text) return '';
+        const dmy = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+        if (dmy) { let [, day, month, year] = dmy; if (year.length === 2) year = `20${year}`; return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`; }
+        const date = new Date(text);
+        return isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+      }
+
+      async function loadRows() {
+        const response = await fetch(`${api}/api/inventory?connectionString=${encodeURIComponent(connectionString)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải inventory.');
+        inventoryRows = payload.rows || [];
+        renderRows();
+      }
+
+      function renderRows() {
+        const sku = $('searchSkuInput').value.trim().toLowerCase();
+        const parentpo = $('searchParentPoInput').value.trim().toLowerCase();
+        const filtered = inventoryRows
+          .filter(row => (!sku || String(row.sku_inventory || '').toLowerCase().includes(sku)) && (!parentpo || String(row.parent_po_invent || '').toLowerCase().includes(parentpo)))
+          .sort((firstRow, secondRow) => $('dueDateSort').value === 'asc' ? number(firstRow.due_date) - number(secondRow.due_date) : number(secondRow.due_date) - number(firstRow.due_date));
+        const inventoryByParentPoSku = new Map();
+        filtered.forEach(row => {
+          const parentPo = String(row.parent_po_invent || '').trim();
+          const rowSku = String(row.sku_inventory || '').trim();
+          if (!parentPo || !rowSku) return;
+          const key = JSON.stringify([parentPo, rowSku]);
+          const group = inventoryByParentPoSku.get(key) || { parentPo, sku: rowSku, qty: 0 };
+          group.qty += number(row.qty_inventory);
+          inventoryByParentPoSku.set(key, group);
+        });
+        const groupedRows = [...inventoryByParentPoSku.values()].sort((first, second) =>
+          first.parentPo.localeCompare(second.parentPo, 'vi') || first.sku.localeCompare(second.sku, 'vi')
+        );
+        $('inventorySummaryBody').innerHTML = groupedRows.map(row => `
+          <tr><td>${escapeHtml(row.parentPo)}</td><td>${escapeHtml(row.sku)}</td><td>${row.qty.toLocaleString('vi-VN')}</td></tr>
+        `).join('') || '<tr><td colspan="3" class="muted">Không có tồn kho đã map theo Parent PO + SKU.</td></tr>';
+        $('totalCbm').textContent = filtered.reduce((sum, row) => sum + number(row.totalcbm), 0).toFixed(3);
+        const overdueCbm = filtered.filter(row => number(row.due_date) > 14).reduce((sum, row) => sum + number(row.totalcbm), 0);
+        $('overdueCbm').textContent = overdueCbm.toFixed(3);
+        $('overdueCbmCard').classList.toggle('overdue', overdueCbm > 0);
+        $('inventoryBody').innerHTML = filtered.map(row => `
+          <tr>
+            <td>${row.id}</td><td>${escapeHtml(row.parent_po_invent || '')}</td><td>${escapeHtml(row.sku_inventory || '')}</td>
+            <td>${number(row.qty_inventory).toLocaleString('vi-VN')}</td><td>${number(row.qty_rcv).toLocaleString('vi-VN')}</td>
+            <td>${toDateOnly(row.date_rcv)}</td><td>${row.due_date == null ? '' : number(row.due_date)}</td><td>${toDateOnly(row.date_update)}</td><td>${number(row.cbmperunit).toFixed(4)}</td><td>${number(row.totalcbm).toFixed(3)}</td>
+            <td>${escapeHtml(row.location || '')}</td>
+            <td><button class="ghost" data-edit="${row.id}" data-parentpo="${escapeHtml(row.parent_po_invent || '')}" type="button">Sửa Parent PO</button> <button class="ghost" data-edit-location="${row.id}" type="button">Edit location</button></td>
+          </tr>
+        `).join('') || '<tr><td colspan="12" class="muted">Không có dữ liệu phù hợp.</td></tr>';
+      }
+
+      function exportLocation() {
+        const rows = inventoryRows
+          .filter(row => number(row.qty_inventory) > 0)
+          .map(row => ({
+            'Parent PO': row.parent_po_invent || '',
+            SKU: row.sku_inventory || '',
+            'Ngày nhập': toDateOnly(row.date_rcv),
+            'Số lượng tồn': number(row.qty_inventory),
+            Location: row.location || ''
+          }));
+        if (!rows.length) return showNotice('Không có tồn kho để export.');
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        worksheet['!cols'] = [{ wch: 22 }, { wch: 24 }, { wch: 14 }, { wch: 16 }, { wch: 30 }];
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory Location');
+        XLSX.writeFile(workbook, `inventory-location-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showNotice(`Đã export ${rows.length} dòng tồn kho.`);
+      }
+
+      async function importFile(file) {
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        const groupedRows = new Map();
+        grid.slice(1).forEach(cells => {
+          const row = {
+            sku_inventory: String(cells[3] ?? '').trim(),
+            date_rcv: excelDateToISO(cells[14]),
+            qty_rcv: number(cells[48]),
+            parent_po_invent: String(cells[37] ?? '').trim(),
+            qty_inventory: number(cells[69])
+          };
+          if (row.qty_inventory <= 0) return;
+          const key = JSON.stringify([row.parent_po_invent, row.sku_inventory, row.date_rcv]);
+          const existing = groupedRows.get(key);
+          if (existing) existing.qty_inventory = Number((existing.qty_inventory + row.qty_inventory).toFixed(3));
+          else groupedRows.set(key, row);
+        });
+        const rows = [...groupedRows.values()];
+        if (!rows.length) throw new Error('Không có dòng nào có Qty inventory (cột BR) lớn hơn 0.');
+        if (!confirm(`Import ${rows.length} dòng có Qty inventory (BR) lớn hơn 0? Dữ liệu inventory hiện có sẽ bị xóa.`)) return;
+        const batchSize = 500;
+        let imported = 0;
+        for (let start = 0; start < rows.length; start += batchSize) {
+          const batch = rows.slice(start, start + batchSize);
+          showNotice(`Đang import ${Math.min(start + batch.length, rows.length)}/${rows.length} dòng...`);
+          const response = await fetch(`${api}/api/inventory/import`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString, rows: batch, clearExisting: start === 0 })
+          });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) throw new Error(payload.message || 'Import inventory thất bại.');
+          imported += number(payload.inserted);
+        }
+        showNotice(`Đã xóa dữ liệu cũ và import ${imported} dòng inventory.`);
+        await loadRows();
+      }
+
+      $('importFile').addEventListener('change', event => event.target.files[0] && importFile(event.target.files[0]).catch(error => showNotice(error.message, true)));
+      $('exportLocationBtn').addEventListener('click', exportLocation);
+      $('refreshBtn').addEventListener('click', () => loadRows().catch(error => showNotice(error.message, true)));
+      $('searchSkuInput').addEventListener('input', renderRows);
+      $('searchParentPoInput').addEventListener('input', renderRows);
+      $('dueDateSort').addEventListener('change', renderRows);
+      $('clearSearchBtn').addEventListener('click', () => { $('searchSkuInput').value = ''; $('searchParentPoInput').value = ''; renderRows(); });
+      $('inventoryBody').addEventListener('click', event => {
+        const editLocationButton = event.target.closest('[data-edit-location]');
+        if (editLocationButton) {
+          const row = inventoryRows.find(item => String(item.id) === editLocationButton.dataset.editLocation);
+          if (!row) return;
+          const location = prompt('Nhập location mới (để trống nếu muốn xóa):', row.location || '');
+          if (location === null) return;
+          fetch(`${api}/api/inventory/${row.id}/location`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString, location: location.trim() })
+          })
+            .then(response => response.json().then(payload => ({ response, payload })))
+            .then(({ response, payload }) => {
+              if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể cập nhật location.');
+              showNotice(`Đã cập nhật location cho ${payload.affectedRows} dòng inbound.`);
+              return loadRows();
+            })
+            .catch(error => showNotice(error.message, true));
+          return;
+        }
+        const id = event.target.closest('[data-edit]')?.dataset.edit;
+        if (!id) return;
+        const parentpo = prompt('Nhập Parent PO mới:', event.target.closest('[data-edit]').dataset.parentpo || '');
+        if (parentpo === null || !parentpo.trim()) return;
+        fetch(`${api}/api/inventory/${id}/parentpo`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connectionString, parent_po_invent: parentpo.trim() }) })
+          .then(response => response.json().then(payload => ({ response, payload })))
+          .then(({ response, payload }) => { if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể cập nhật Parent PO.'); showNotice('Đã cập nhật Parent PO.'); return loadRows(); })
+          .catch(error => showNotice(error.message, true));
+      });
+      loadRows().catch(error => showNotice(error.message, true));
+    </script>
+  </body>
+</html>

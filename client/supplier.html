@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nhà cung cấp</title>
+    <style>
+      :root { --bg: #f3f6fb; --panel: #fff; --border: #dfe7f5; --text: #14213d; --muted: #5b6b8a; --primary: #2563eb; --danger: #b91c1c; }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--text); font-family: Inter, 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #edf4ff, #f8fafc); }
+      .shell { display: flex; min-height: 100vh; }
+      aside { width: 240px; padding: 22px 16px; color: #e2e8f0; background: linear-gradient(180deg, #101c38, #16284a); }
+      .brand { display: flex; align-items: center; gap: 12px; padding: 8px 10px 18px; border-bottom: 1px solid #ffffff2e; font-weight: 700; }
+      .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #2563eb; }
+      nav { display: grid; gap: 8px; margin-top: 18px; }
+      nav a { padding: 11px 12px; border-radius: 12px; color: #dfeafc; text-decoration: none; font-weight: 600; }
+      nav a.active, nav a:hover { color: #fff; background: #60a5fa2e; }
+      main { flex: 1; padding: 30px 24px 40px; min-width: 0; }
+      .page { max-width: 1200px; margin: auto; }
+      .topbar, .card-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+      h1, h2 { margin: 0; } h1 { font-size: 2rem; } h2 { font-size: 1.15rem; }
+      .muted { color: var(--muted); }
+      .card { margin-top: 20px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--panel); box-shadow: 0 10px 30px #0f172a14; }
+      .form-grid { display: grid; grid-template-columns: 1fr 2fr auto; gap: 14px; margin-top: 16px; align-items: end; }
+      label { display: grid; gap: 7px; color: var(--muted); font-size: .88rem; font-weight: 600; }
+      input { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: #f8fafc; }
+      button { border: 0; border-radius: 9px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+      .primary { color: white; background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+      .ghost { color: var(--text); background: #edf2ff; }
+      .actions { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+      .notice { margin-top: 14px; padding: 10px 12px; border-radius: 9px; background: #ecfdf5; color: #065f46; }
+      .table-wrap { overflow: auto; margin-top: 16px; }
+      table { width: 100%; min-width: 620px; border-collapse: collapse; }
+      th, td { padding: 10px 9px; text-align: left; border-bottom: 1px solid #edf2f7; white-space: nowrap; }
+      th { color: var(--muted); background: #f8fafc; font-size: .78rem; text-transform: uppercase; }
+      @media (max-width: 900px) { aside { display: none; } main { padding: 20px 14px; } .form-grid { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } .topbar { align-items: flex-start; flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div>
+        <nav aria-label="Main navigation">
+          <a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a>
+          <a href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a>
+          <a class="active" href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a>
+          <a href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a>
+          <a href="pickinglist.html" target="_blank" rel="noopener noreferrer">📋 Picking List</a>
+          <a href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a>
+          <a href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a>
+          <a href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 Reports</a>
+          <a href="updateloc.html" target="_blank" rel="noopener noreferrer">📍 Update location</a>
+        </nav>
+      </aside>
+      <main>
+        <div class="page">
+          <header class="topbar">
+            <div><p class="muted">Warehouse Management System</p><h1>Nhà cung cấp</h1></div>
+            <button class="ghost" id="refreshBtn" type="button">Làm mới</button>
+          </header>
+
+          <section class="card">
+            <div class="card-header"><h2 id="formTitle">Thêm nhà cung cấp</h2><button class="ghost" id="cancelEditBtn" type="button" hidden>Hủy sửa</button></div>
+            <form id="supplierForm" class="form-grid">
+              <label>Mã nhà cung cấp<input id="manccInput" required maxlength="100" placeholder="Ví dụ: SUP001"></label>
+              <label>Tên nhà cung cấp<input id="supplierNameInput" required maxlength="255" placeholder="Nhập tên nhà cung cấp"></label>
+              <div class="actions"><button class="primary" id="submitBtn" type="submit">Thêm mới</button></div>
+            </form>
+            <div id="notice" class="notice" hidden></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header"><h2>Danh sách nhà cung cấp</h2><input id="searchInput" placeholder="Tìm mã hoặc tên..." aria-label="Tìm nhà cung cấp"></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Mã nhà cung cấp</th><th>Tên nhà cung cấp</th><th>Thao tác</th></tr></thead>
+                <tbody id="supplierBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005';
+      const $ = id => document.getElementById(id);
+      const notice = $('notice');
+      let suppliers = [];
+      let editingMancc = '';
+
+      function showNotice(message, error = false) {
+        notice.hidden = false;
+        notice.textContent = message;
+        notice.style.background = error ? '#fef2f2' : '#ecfdf5';
+        notice.style.color = error ? '#b91c1c' : '#065f46';
+      }
+
+      async function loadSuppliers() {
+        const response = await fetch(`${api}/api/suppliers?connectionString=${encodeURIComponent(connectionString)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải danh sách nhà cung cấp.');
+        suppliers = payload.rows || [];
+        renderTable();
+      }
+
+      function renderTable() {
+        const keyword = $('searchInput').value.trim().toLowerCase();
+        const filtered = suppliers.filter(supplier => !keyword || `${supplier.MANCC || ''} ${supplier.Name_doc || ''}`.toLowerCase().includes(keyword));
+        $('supplierBody').innerHTML = filtered.map(supplier => `
+          <tr>
+            <td>${supplier.MANCC || ''}</td>
+            <td>${supplier.Name_doc || ''}</td>
+            <td><button class="ghost" data-edit="${supplier.MANCC || ''}" type="button">Sửa</button></td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="muted">Chưa có nhà cung cấp.</td></tr>';
+      }
+
+      function resetForm() {
+        editingMancc = '';
+        $('supplierForm').reset();
+        $('manccInput').readOnly = false;
+        $('formTitle').textContent = 'Thêm nhà cung cấp';
+        $('submitBtn').textContent = 'Thêm mới';
+        $('cancelEditBtn').hidden = true;
+      }
+
+      function openEdit(mancc) {
+        const supplier = suppliers.find(row => String(row.MANCC) === String(mancc));
+        if (!supplier) return;
+        editingMancc = supplier.MANCC;
+        $('manccInput').value = supplier.MANCC || '';
+        $('supplierNameInput').value = supplier.Name_doc || '';
+        $('manccInput').readOnly = true;
+        $('formTitle').textContent = 'Sửa nhà cung cấp';
+        $('submitBtn').textContent = 'Lưu thay đổi';
+        $('cancelEditBtn').hidden = false;
+        $('supplierNameInput').focus();
+      }
+
+      $('supplierForm').addEventListener('submit', event => {
+        event.preventDefault();
+        const supplier = { MANCC: $('manccInput').value.trim(), Name_doc: $('supplierNameInput').value.trim() };
+        const url = editingMancc ? `${api}/api/suppliers/${encodeURIComponent(editingMancc)}` : `${api}/api/suppliers`;
+        fetch(url, {
+          method: editingMancc ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString, supplier })
+        })
+          .then(response => response.json().then(payload => ({ response, payload })))
+          .then(({ response, payload }) => {
+            if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể lưu nhà cung cấp.');
+            showNotice(editingMancc ? 'Đã cập nhật nhà cung cấp.' : 'Đã thêm nhà cung cấp mới.');
+            resetForm();
+            return loadSuppliers();
+          })
+          .catch(error => showNotice(error.message, true));
+      });
+
+      $('supplierBody').addEventListener('click', event => event.target.dataset.edit && openEdit(event.target.dataset.edit));
+      $('searchInput').addEventListener('input', renderTable);
+      $('refreshBtn').addEventListener('click', () => loadSuppliers().catch(error => showNotice(error.message, true)));
+      $('cancelEditBtn').addEventListener('click', resetForm);
+      loadSuppliers().catch(error => showNotice(error.message, true));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "wms-v3-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mysql2": "^3.5.1",
+    "wms-v3-react-mysql-tool": "file:.."
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

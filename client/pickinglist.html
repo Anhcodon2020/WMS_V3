@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo picking list</title>
+    <style>
+      :root { --navy:#112a46; --primary:#1677d2; --primary-dark:#0b5cab; --sky:#eaf5ff; --bg:#f4f7fb; --panel:#fff; --border:#e1e8f0; --text:#183047; --muted:#6b7d90; --danger:#bd3c48; --warning:#d98212; --shadow:0 12px 30px rgba(24,48,71,.08); }
+      * { box-sizing:border-box; }
+      body { margin:0; min-height:100vh; color:var(--text); background:radial-gradient(circle at 3% 0%,#dbefff 0,transparent 25rem),linear-gradient(180deg,#f8fbff 0%,var(--bg) 55%); font-family:Inter,"Segoe UI",Arial,sans-serif; }
+      .page { max-width:1800px; margin:auto; padding:30px 28px 50px; }
+      .topbar,.toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+      .topbar { padding:26px 28px; border-radius:20px; color:#fff; background:linear-gradient(115deg,#102b48,#174f78 60%,#1272bc); box-shadow:0 18px 36px rgba(15,57,94,.2); }
+      .brand { display:flex; align-items:center; gap:16px; }.brand-mark { display:grid; place-items:center; width:48px; height:48px; border-radius:14px; color:#0f588f; background:#fff; font-size:1.35rem; box-shadow:0 6px 16px #05182d33; }
+      h1,h2,p { margin:0; } h1 { margin-top:3px; font-size:clamp(1.65rem,3vw,2.15rem); letter-spacing:-.035em; } h2 { font-size:1.05rem; letter-spacing:-.015em; }
+      .eyebrow { color:#b8dcf7; font-size:.72rem; font-weight:800; letter-spacing:.11em; text-transform:uppercase; }.muted { color:var(--muted); }.topbar .muted { color:#d4e7f7; }
+      .card { margin-top:20px; padding:22px; border:1px solid var(--border); border-radius:18px; background:var(--panel); box-shadow:var(--shadow); }
+      .filter-card { padding:18px 22px; }.toolbar { justify-content:flex-start; margin-top:0; }.section-head { justify-content:space-between; margin-bottom:18px; }
+      .filter-group { display:flex; align-items:center; gap:9px; flex:1 1 300px; min-width:230px; }.field-icon { color:#1971bc; font-size:1rem; }
+      label { color:var(--muted); font-size:.78rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; } select,button { min-height:42px; border-radius:10px; padding:9px 13px; font:inherit; }
+      select { flex:1; min-width:150px; color:var(--text); border:1px solid var(--border); background:#f8fbfd; outline:none; transition:.2s; } select:focus,input:focus { border-color:#5ca7e2; box-shadow:0 0 0 3px #d9efff; }
+      button { border:0; cursor:pointer; font-weight:750; color:#fff; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); box-shadow:0 5px 12px #1677d233; transition:transform .18s,box-shadow .18s; } button:hover { transform:translateY(-1px); box-shadow:0 8px 16px #1677d244; } button.ghost { color:#175889; background:#e5f2fc; box-shadow:none; } button.ghost:hover { background:#d6ecfb; } button.danger { color:#fff; background:#bd3c48; box-shadow:none; } button.danger:hover { background:#a92f3b; }
+      button.row-action { min-height:32px; padding:6px 11px; color:#14609a; background:#e0f1ff; box-shadow:none; } button:disabled { cursor:not-allowed; opacity:.55; transform:none; }
+      .record-pill,.status { display:inline-flex; align-items:center; min-height:30px; padding:6px 11px; border-radius:999px; color:#28638e; background:#edf7ff; font-size:.83rem; font-weight:700; }.status { color:#0d6b58; background:#e5f8f2; }
+      .notice { margin-top:14px; padding:11px 13px; border:1px solid #f5c9ce; border-radius:10px; color:var(--danger); background:#fff3f4; font-weight:600; } .notice[hidden] { display:none; }
+      .export-progress { display:grid; gap:8px; margin-top:16px; color:var(--muted); font-size:.84rem; font-weight:700; }.export-progress[hidden] { display:none; }.progress-track { height:12px; overflow:hidden; border-radius:999px; background:#e7edf3; }.progress-bar { width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#1681cf,#0d6b58); transition:width .25s ease; }.export-progress.failed .progress-bar { background:var(--danger); }
+      .summary-card { background:linear-gradient(130deg,#fff 10%,#f3faff); }.table-wrap { overflow:auto; margin-top:0; border:1px solid #e7edf3; border-radius:12px; }.detail-table-wrap { max-height:65vh; } table { width:100%; min-width:900px; border-collapse:separate; border-spacing:0; } th,td { padding:12px 11px; text-align:left; white-space:nowrap; border-bottom:1px solid #edf1f5; } th { position:sticky; top:0; z-index:1; color:#63778a; background:#f6f9fc; font-size:.7rem; font-weight:800; letter-spacing:.045em; text-transform:uppercase; } .detail-table th:nth-child(9),.detail-table td:nth-child(9) { width:78px; min-width:78px; max-width:78px; } .detail-table th:nth-child(10),.detail-table td:nth-child(10) { width:86px; min-width:86px; max-width:86px; } .detail-table th:nth-child(11),.detail-table td:nth-child(11) { width:92px; min-width:92px; max-width:92px; } .detail-table th:nth-child(12),.detail-table td:nth-child(12) { width:92px; min-width:92px; max-width:92px; } .detail-table th:nth-child(15),.detail-table th:nth-child(16),.detail-table th:nth-child(17),.detail-table td:nth-child(15),.detail-table td:nth-child(16),.detail-table td:nth-child(17) { width:78px; min-width:78px; max-width:78px; overflow:hidden; text-overflow:ellipsis; } .detail-table th:nth-child(15),.detail-table th:nth-child(16),.detail-table th:nth-child(17),.detail-table td:nth-child(15),.detail-table td:nth-child(16),.detail-table td:nth-child(17) { text-align:center; } tbody tr:last-child td { border-bottom:0; } tbody tr:not(.due-warning):not(.due-danger):not(.below-cbm):hover td { background:#f7fbff; } tr.due-warning td { background:#fff8e6; } tr.due-danger td,.below-cbm td { color:#9f3542; background:#fff0f1; font-weight:700; } input[type="number"] { width:110px; min-height:34px; padding:6px 8px; border:1px solid var(--border); border-radius:8px; color:var(--text); outline:none; }.detail-table input[type="number"] { width:70px; min-height:32px; padding:5px 6px; }
+      input[type="checkbox"] { width:16px; height:16px; accent-color:var(--primary); cursor:pointer; }.summary-table { min-width:360px; max-width:600px; } .summary-table th:last-child,.summary-table td:last-child,.number { text-align:right; }
+      .action-group { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }.modal-backdrop { position:fixed; inset:0; z-index:10; display:grid; place-items:center; padding:18px; background:#102b487a; }.modal-backdrop[hidden] { display:none; }.modal { width:min(440px,100%); padding:26px; border-radius:18px; background:#fff; box-shadow:0 24px 55px #06182b55; }.modal h2 { margin-bottom:7px; }.modal p { margin-bottom:20px; }.modal label { display:grid; gap:8px; }.modal input { width:100%; min-height:42px; padding:9px 12px; border:1px solid var(--border); border-radius:10px; color:var(--text); font:inherit; outline:none; }.modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }.split-calculations { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }.split-calculations div { display:grid; gap:4px; padding:12px; border:1px solid var(--border); border-radius:8px; background:#f8fbfd; }.split-calculations span { color:var(--muted); font-size:.8rem; }.split-calculations strong { color:var(--text); font-size:1rem; }
+      @media (max-width:700px) { .page { padding:16px 12px 32px; }.topbar { padding:20px; }.brand-mark { width:42px;height:42px; }.card { padding:16px; border-radius:14px; }.filter-group { flex-basis:100%; }.filter-group select { min-width:0; }.topbar button { width:100%; } }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar"><div class="brand"><span class="brand-mark">▦</span><div><p class="eyebrow">Warehouse Management System</p><h1>Danh sách lấy hàng</h1><p class="muted">Theo dõi, chọn và tách SKU cho từng đợt xuất kho.</p></div></div><button class="ghost" id="refreshBtn" type="button">↻ Làm mới dữ liệu</button></header>
+      <section class="card filter-card">
+        <div class="toolbar"><div class="filter-group"><span class="field-icon">⌘</span><label for="pickingNo">Picking No</label><select id="pickingNo"><option value="">Đang tải...</option></select></div><div class="filter-group"><span class="field-icon">⌕</span><label for="fdcFilter">FDC</label><select id="fdcFilter"><option value="">Tất cả FDC</option></select></div><span class="record-pill" id="recordStatus">0 dòng</span></div>
+        <div id="notice" class="notice" hidden></div>
+      </section>
+      <section class="card summary-card">
+        <div class="toolbar section-head"><div><p class="eyebrow" style="color:#2480c1">Tổng quan khối lượng</p><h2>Tổng CBM theo FDC</h2></div></div>
+        <div class="table-wrap"><table class="summary-table"><thead><tr><th>FDC</th><th>Carton Qty</th><th>Tong CBM</th></tr></thead><tbody id="summaryBody"><tr><td colspan="3" class="muted">Dang tai du lieu...</td></tr></tbody></table></div>
+        <div class="toolbar section-head" style="margin-top:22px"><div><p class="eyebrow" style="color:#2480c1">Theo SKU đã chọn</p><h2>Ước tính pallet theo FDC</h2></div></div>
+        <div class="table-wrap"><table class="summary-table"><thead><tr><th>FDC</th><th>Pallet 1m2</th><th>CBM TB/pallet 1m2</th><th>Pallet 1m6</th><th>CBM TB/pallet 1m6</th><th>Pallet 1m9</th><th>CBM TB/pallet 1m9</th><th>Oversize (CBM)</th></tr></thead><tbody id="palletSummaryBody"><tr><td colspan="8" class="muted">Chưa chọn SKU.</td></tr></tbody></table></div>
+        <div class="toolbar section-head" style="margin-top:22px"><div><p class="eyebrow" style="color:#2480c1">Ngưỡng tối thiểu 56 CBM</p><h2>Tổng CBM theo Hub DC</h2></div></div>
+        <div class="table-wrap"><table class="summary-table"><thead><tr><th>Hub DC</th><th>Tổng CBM</th></tr></thead><tbody id="hubCbmSummaryBody"><tr><td colspan="2" class="muted">Chưa chọn SKU.</td></tr></tbody></table></div>
+      </section>
+      <section class="card">
+        <div class="toolbar section-head"><div><p class="eyebrow" style="color:#2480c1">Danh mục xuất kho</p><h2>Chi tiết Picking</h2></div><span class="status" id="selectedStatus">Đã chọn: 0 SKU | Carton: 0 | CBM: 0.000</span><button class="danger" id="deleteSelectedBtn" type="button">Xóa toàn bộ</button><button id="splitBtn" type="button">✂ Tách SKU</button></div>
+          <div class="table-wrap detail-table-wrap"><table class="detail-table"><thead><tr><th>Chon</th><th>FDC</th><th>Hub DC</th><th>Parent PO</th><th>Release Key</th><th>SKU</th><th>Nha cung cap</th><th>Child LPO</th><th>Due Date</th><th>Carton Qty</th><th>Qty Inventory</th><th>Qty Tach</th><th>Total CBM</th><th>CBM/SKU</th><th>Length</th><th>Width</th><th>Height</th><th>Thao tac</th></tr></thead><tbody id="detailBody"><tr><td colspan="18" class="muted">Dang tai du lieu...</td></tr></tbody></table></div>
+      </section>
+    </main>
+    <div class="modal-backdrop" id="splitModal" hidden>
+      <form class="modal" id="splitForm">
+        <h2>Tách SKU</h2>
+        <p class="muted" id="splitSkuLabel"></p>
+        <label for="splitQtyInput">Số lượng cần tách<input id="splitQtyInput" type="number" min="0" step="0.001" required></label>
+        <div class="split-calculations">
+          <div><span>CBM dòng mới</span><strong id="splitCbm">0.000</strong></div>
+          <div><span>Số lượng còn lại</span><strong id="remainingQty">0</strong></div>
+          <div><span>CBM còn lại</span><strong id="remainingCbm">0.000</strong></div>
+        </div>
+        <div class="modal-actions"><button class="ghost" id="cancelSplitBtn" type="button">Hủy</button><button id="confirmSplitBtn" type="submit">OK</button></div>
+      </form>
+    </div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005';
+      const $ = id => document.getElementById(id);
+      const selectedRows = new Set();
+      const splitQuantities = new Map();
+      let rows = [];
+      let splitRowId = null;
+      function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }
+      function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
+      function showError(message) { $('notice').hidden = false; $('notice').textContent = message; }
+      function availableQty(row) { return Math.max(0, Math.min(number(row.qty_inventory), number(row.carton_qty))); }
+      function updateSelectedStatus() {
+        const selected = rows.filter(row => number(row.carton_qty) > 0 && selectedRows.has(row.id));
+        const totalCarton = selected.reduce((total, row) => total + number(splitQuantities.get(row.id) ?? availableQty(row)), 0);
+        const totalCbm = selected.reduce((total, row) => total + number(splitQuantities.get(row.id) ?? availableQty(row)) * number(row.cbm_per_sku), 0);
+        $('selectedStatus').textContent = `Đã chọn: ${selected.length.toLocaleString('vi-VN')} SKU | Carton: ${totalCarton.toLocaleString('vi-VN')} | CBM: ${totalCbm.toFixed(3)}`;
+        const capacities = { '1m2': 3, '1m6': 4, '1m9': 4.75, oversize: 1 };
+        const selectedFdc = $('fdcFilter').value;
+        const palletRows = selected.filter(row => !selectedFdc || String(row.fdc || '').trim() === selectedFdc);
+        const palletTotals = palletRows.reduce((groups, row) => {
+          const fdc = String(row.fdc || '').trim() || 'Chưa map';
+          const kindpallet = String(row.kindpallet || '').trim().toLowerCase();
+          if (!Object.hasOwn(capacities, kindpallet)) return groups;
+          if (!groups[fdc]) groups[fdc] = { '1m2': 0, '1m6': 0, '1m9': 0, oversize: 0 };
+          const cbm = number(splitQuantities.get(row.id) ?? availableQty(row)) * number(row.cbm_per_sku);
+          groups[fdc][kindpallet] += cbm;
+          return groups;
+        }, {});
+        $('palletSummaryBody').innerHTML = Object.entries(palletTotals).sort(([left], [right]) => left.localeCompare(right)).map(([fdc, totals]) => {
+          const palletCount1m2 = Math.ceil(totals['1m2'] / capacities['1m2'] - 1e-10);
+          const palletCount1m6 = Math.ceil(totals['1m6'] / capacities['1m6'] - 1e-10);
+          const palletCount1m9 = Math.ceil(totals['1m9'] / capacities['1m9'] - 1e-10);
+          const average1m2 = palletCount1m2 ? totals['1m2'] / palletCount1m2 : 0;
+          const average1m6 = palletCount1m6 ? totals['1m6'] / palletCount1m6 : 0;
+          const average1m9 = palletCount1m9 ? totals['1m9'] / palletCount1m9 : 0;
+          return `<tr><td>${escapeHtml(fdc)}</td><td class="number">${palletCount1m2.toLocaleString('vi-VN')}</td><td class="number">${average1m2.toFixed(3)}</td><td class="number">${palletCount1m6.toLocaleString('vi-VN')}</td><td class="number">${average1m6.toFixed(3)}</td><td class="number">${palletCount1m9.toLocaleString('vi-VN')}</td><td class="number">${average1m9.toFixed(3)}</td><td class="number">${totals.oversize.toFixed(3)}</td></tr>`;
+        }).join('') || '<tr><td colspan="8" class="muted">Chưa chọn SKU cho FDC này.</td></tr>';
+        const hubCbmRows = rows.filter(row => number(row.carton_qty) > 0 && (!selectedFdc || String(row.fdc || '').trim() === selectedFdc));
+        const hubCbmTotals = hubCbmRows.reduce((groups, row) => {
+          const hubdc = String(row.hubdc || '').trim() || 'Chưa map';
+          groups[hubdc] = (groups[hubdc] || 0) + number(row.total_cbm);
+          return groups;
+        }, {});
+        $('hubCbmSummaryBody').innerHTML = Object.entries(hubCbmTotals).sort(([left], [right]) => left.localeCompare(right)).map(([hubdc, cbm]) => `<tr class="${cbm < 56 ? 'below-cbm' : ''}"><td>${escapeHtml(hubdc)}</td><td class="number">${cbm.toFixed(3)}</td></tr>`).join('') || '<tr><td colspan="2" class="muted">Không có dòng picking cho FDC này.</td></tr>';
+      }
+      function toggleRow(row, checked) {
+        if (checked) {
+          selectedRows.add(row.id);
+          if (!splitQuantities.has(row.id)) splitQuantities.set(row.id, availableQty(row));
+        } else {
+          selectedRows.delete(row.id);
+          splitQuantities.delete(row.id);
+        }
+        renderCurrentView();
+      }
+      function updateSplitQuantity(rowId, value) {
+        const row = rows.find(item => String(item.id) === String(rowId));
+        if (!row) return;
+        splitQuantities.set(row.id, Math.min(Math.max(0, number(value)), availableQty(row)));
+        renderCurrentView();
+      }
+      function updateSplitCalculation() {
+        const row = rows.find(item => String(item.id) === String(splitRowId));
+        if (!row) return;
+        const splitQty = Math.min(availableQty(row), Math.max(0, number($('splitQtyInput').value)));
+        const remaining = Math.max(0, number(row.carton_qty) - splitQty);
+        const cbmPerSku = number(row.cbm_per_sku);
+        $('splitCbm').textContent = (splitQty * cbmPerSku).toFixed(3);
+        $('remainingQty').textContent = remaining.toLocaleString('vi-VN', { maximumFractionDigits:3 });
+        $('remainingCbm').textContent = (remaining * cbmPerSku).toFixed(3);
+        $('confirmSplitBtn').disabled = splitQty <= 0;
+      }
+      function openSplitDialog(rowId) {
+        const row = rows.find(item => String(item.id) === String(rowId));
+        if (!row) return showError('Không tìm thấy dòng Picking cần tách.');
+        const maxQty = availableQty(row);
+        if (maxQty <= 0) return showError('Dòng này không còn số lượng khả dụng để tách.');
+        splitRowId = row.id;
+        $('splitSkuLabel').textContent = `SKU: ${row.sku} | ID: ${row.id}`;
+        $('splitQtyInput').max = String(maxQty);
+        const chosenQty = splitQuantities.has(row.id) ? Math.min(number(splitQuantities.get(row.id)), maxQty) : '';
+        $('splitQtyInput').value = chosenQty === '' ? '' : String(chosenQty);
+        updateSplitCalculation();
+        $('splitModal').hidden = false;
+        $('splitQtyInput').focus();
+      }
+      function openSelectedSplitDialog() {
+        const selected = [...selectedRows].filter(id => rows.some(row => String(row.id) === String(id) && number(row.carton_qty) > 0));
+        if (selected.length !== 1) return showError('Vui lòng chọn đúng một SKU để tách.');
+        openSplitDialog(selected[0]);
+      }
+      async function confirmSplit(event) {
+        event.preventDefault();
+        const row = rows.find(item => String(item.id) === String(splitRowId));
+        const splitQty = number($('splitQtyInput').value);
+        if (!row || splitQty <= 0 || splitQty > availableQty(row)) return showError('Số lượng tách không hợp lệ.');
+        $('confirmSplitBtn').disabled = true;
+        try {
+          const response = await fetch(`${api}/api/pickinglist/split`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ connectionString, picking_no:$('pickingNo').value, rows:[{ id:row.id, split_qty:splitQty }] }) });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tách SKU.');
+          if (payload.inserted !== 1) throw new Error('Không tạo được dòng mới cho SKU đã chọn.');
+          $('splitModal').hidden = true;
+          await loadPickingList($('pickingNo').value, true);
+          $('notice').hidden = false;
+          $('notice').textContent = `Đã tách ${splitQty.toLocaleString('vi-VN')} SKU ${row.sku}; số lượng còn lại ${Math.max(0, number(row.carton_qty) - splitQty).toLocaleString('vi-VN')}.`;
+        } catch (error) { showError(error.message); } finally { $('confirmSplitBtn').disabled = false; }
+      }
+      async function deleteSelectedRows() {
+        const pickingNo = $('pickingNo').value;
+        if (!pickingNo || !rows.length) return showError('Không có dữ liệu Picking để xóa.');
+        if (!window.confirm(`Bạn có chắc muốn xóa toàn bộ ${rows.length} dòng của Picking No ${pickingNo}?`)) return;
+        $('deleteSelectedBtn').disabled = true;
+        try {
+          const response = await fetch(`${api}/api/pickinglist/delete`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ connectionString, picking_no:pickingNo }) });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể xóa dòng Picking.');
+          selectedRows.clear(); splitQuantities.clear();
+          await loadPickingList($('pickingNo').value);
+          $('notice').hidden = false;
+          $('notice').textContent = `Đã xóa toàn bộ ${number(payload.deletedRows).toLocaleString('vi-VN')} dòng của Picking No ${pickingNo}.`;
+        } catch (error) { showError(error.message); } finally { $('deleteSelectedBtn').disabled = false; }
+      }
+      function selectedPayload() {
+        return [...selectedRows]
+          .map(id => ({
+            id,
+            split_qty: number(splitQuantities.get(id)),
+            hubdc: rows.find(row => String(row.id) === String(id))?.hubdc || ''
+          }))
+          .filter(row => row.split_qty > 0);
+      }
+      function createExportDialog() {
+        const backdrop = document.createElement('div');
+        backdrop.id = 'exportModal'; backdrop.className = 'modal-backdrop'; backdrop.hidden = true;
+        backdrop.innerHTML = '<form class="modal" id="exportForm"><h2>Xuất sang Outbound</h2><p class="muted">Dữ liệu được lưu theo các SKU đang chọn và tồn kho sẽ được trừ khi xác nhận.</p><label for="jobnoInput">Job No<input id="jobnoInput" autocomplete="off" required></label><p class="muted" id="jobnoPreview">Chỉ nhập phần xx ở cuối (chữ cái hoặc chữ số).</p><div id="exportProgress" class="export-progress" hidden role="status" aria-live="polite"><div id="exportProgressTrack" class="progress-track" role="progressbar" aria-label="Tiến độ xuất Outbound" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="exportProgressBar" class="progress-bar"></div></div><span id="exportProgressText">Đang chuẩn bị...</span></div><div class="modal-actions"><button class="ghost" id="cancelExportBtn" type="button">Hủy</button><button id="confirmExportBtn" type="submit">Xác nhận xuất</button></div></form>';
+        document.body.append(backdrop);
+        backdrop.addEventListener('click', event => {
+          if (event.target === backdrop && $('confirmExportBtn').disabled === false) backdrop.hidden = true;
+        });
+        $('cancelExportBtn').addEventListener('click', () => {
+          if (!$('confirmExportBtn').disabled) backdrop.hidden = true;
+        });
+        $('exportForm').addEventListener('submit', exportOutbound);
+        $('jobnoInput').addEventListener('input', () => {
+          const prefix = $('jobnoInput').dataset.prefix || '';
+          if (!$('jobnoInput').value.startsWith(prefix)) {
+            const typedSuffix = $('jobnoInput').value.split('_').pop().replace(/[^a-zA-Z0-9]/g, '');
+            $('jobnoInput').value = prefix + typedSuffix;
+          }
+          resetExportProgress();
+        });
+      }
+      function openExportModal() {
+        const selected = selectedPayload();
+        if (!selected.length) return showError('Vui lòng chọn ít nhất một SKU để xuất outbound.');
+        if (!String(selected[0].hubdc || '').trim()) return showError('Hub DC không được để trống.');
+        const prefix = buildOutboundJobno(String(selected[0].hubdc).trim(), '');
+        $('jobnoInput').dataset.prefix = prefix;
+        $('jobnoInput').value = prefix;
+        resetExportProgress();
+        $('exportModal').hidden = false;
+        $('jobnoInput').focus();
+        $('jobnoInput').setSelectionRange(prefix.length, prefix.length);
+      }
+      function buildOutboundJobno(hubdc, suffix) {
+        const today = new Date();
+        const yyyymmdd = `${today.getFullYear()}_${String(today.getMonth() + 1).padStart(2, '0')}_${String(today.getDate()).padStart(2, '0')}`;
+        return `${hubdc}_${yyyymmdd}_${suffix}`;
+      }
+      function resetExportProgress() {
+        $('exportProgress').hidden = true;
+        $('exportProgress').classList.remove('failed');
+        $('exportProgressBar').style.width = '0%';
+        $('exportProgressTrack').setAttribute('aria-valuenow', '0');
+        $('exportProgressText').textContent = 'Đang chuẩn bị...';
+      }
+      function updateExportProgress(progress) {
+        const percent = progress.total > 0 ? Math.min(100, Math.round(progress.completed / progress.total * 100)) : 0;
+        $('exportProgress').hidden = false;
+        $('exportProgress').classList.toggle('failed', progress.status === 'failed');
+        $('exportProgressBar').style.width = `${percent}%`;
+        $('exportProgressTrack').setAttribute('aria-valuenow', String(percent));
+        $('exportProgressText').textContent = progress.status === 'failed'
+          ? `Xuất thất bại: ${progress.message || 'Có lỗi xảy ra.'}`
+          : `${progress.message || 'Đang xuất dữ liệu...'} (${progress.completed}/${progress.total} SKU, ${percent}%)`;
+      }
+      async function monitorExportProgress(progressId, signal) {
+        while (!signal.aborted) {
+          try {
+            const response = await fetch(`${api}/api/pickinglist/export-outbound/progress?progress_id=${encodeURIComponent(progressId)}`, { signal });
+            const payload = await response.json();
+            if (response.ok && payload.ok && payload.progress) {
+              updateExportProgress(payload.progress);
+              if (payload.progress.status === 'complete' || payload.progress.status === 'failed') return;
+            }
+          } catch (error) {
+            if (signal.aborted) return;
+            $('exportProgressText').textContent = 'Đang chờ cập nhật tiến độ...';
+          }
+          await new Promise(resolve => setTimeout(resolve, 400));
+        }
+      }
+      async function exportOutbound(event) {
+        event.preventDefault();
+        const selected = selectedPayload();
+        if (!selected.length) return showError('Vui lòng chọn ít nhất một SKU để xuất outbound.');
+        const hubdc = String(selected[0].hubdc || '').trim();
+        if (!hubdc) return showError('Hub DC không được để trống.');
+        const jobno = $('jobnoInput').value.trim();
+        const prefix = buildOutboundJobno(hubdc, '');
+        const suffix = jobno.startsWith(prefix) ? jobno.slice(prefix.length) : '';
+        if (!/^[a-zA-Z0-9]+$/.test(suffix)) return showError(`Job No phải có dạng ${prefix}xx, trong đó xx chỉ gồm chữ cái và chữ số.`);
+        const progressId = crypto.randomUUID();
+        const progressController = new AbortController();
+        updateExportProgress({ status: 'running', completed: 0, total: selected.length, message: 'Đang bắt đầu xuất...' });
+        $('confirmExportBtn').disabled = true;
+        $('cancelExportBtn').disabled = true;
+        const progressMonitor = monitorExportProgress(progressId, progressController.signal);
+        try {
+          const response = await fetch(`${api}/api/pickinglist/export-outbound`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ connectionString, picking_no:$('pickingNo').value, jobno, rows:selected, progress_id:progressId }) });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể xuất outbound.');
+          updateExportProgress({ status: 'complete', completed: payload.exported, total: payload.exported, message: 'Đã xuất xong' });
+          $('exportModal').hidden = true; $('jobnoInput').value = '';
+          try {
+            await loadPickingList($('pickingNo').value);
+            $('notice').hidden = false;
+            $('notice').textContent = `Đã xuất ${payload.exported} dòng sang Outbound — Job No: ${payload.jobno}.`;
+          } catch (error) {
+            showError(`Đã xuất thành công Job No ${payload.jobno}, nhưng không thể làm mới danh sách: ${error.message}`);
+          }
+        } catch (error) {
+          updateExportProgress({ status: 'failed', completed: 0, total: selected.length, message: error.message });
+          showError(error.message);
+        } finally {
+          progressController.abort();
+          await progressMonitor;
+          $('confirmExportBtn').disabled = false;
+          $('cancelExportBtn').disabled = false;
+        }
+      }
+      function getVisibleRows() {
+        const fdc = $('fdcFilter').value;
+        return rows.filter(row => number(row.carton_qty) > 0 && (!fdc || String(row.fdc || '').trim() === fdc));
+      }
+      function renderSummary(summary) {
+        $('summaryBody').innerHTML = (summary || []).map(row => `<tr><td>${escapeHtml(row.fdc)}</td><td class="number">${number(row.carton_qty).toLocaleString('vi-VN')}</td><td class="number">${number(row.total_cbm).toFixed(3)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Không có dữ liệu.</td></tr>';
+      }
+      function renderDetails(detailRows) {
+        const sortedRows = [...(detailRows || [])].sort((left, right) => number(right.duedate) - number(left.duedate));
+        $('detailBody').innerHTML = sortedRows.map(row => {
+          const dueDate = number(row.duedate);
+          const selected = selectedRows.has(row.id);
+          const splitQty = number(splitQuantities.get(row.id) ?? availableQty(row));
+          const dueClass = dueDate >= 14 ? 'due-danger' : dueDate >= 10 ? 'due-warning' : '';
+          return `<tr class="${dueClass}">
+            <td><input type="checkbox" data-row-id="${row.id}" ${selected ? 'checked' : ''}></td><td>${escapeHtml(row.fdc)}</td><td>${escapeHtml(row.hubdc)}</td><td>${escapeHtml(row.parentpo)}</td><td>${escapeHtml(row.release_key)}</td><td>${escapeHtml(row.sku)}</td><td>${escapeHtml(row.supplier_name)}</td><td>${escapeHtml(row.childlpo)}</td><td class="number">${dueDate.toLocaleString('vi-VN')}</td><td class="number">${number(row.carton_qty).toLocaleString('vi-VN')}</td><td class="number">${number(row.qty_inventory).toLocaleString('vi-VN')}</td><td><input type="number" min="0" max="${availableQty(row)}" value="${selected ? splitQty : 0}" data-split-id="${row.id}" ${selected ? '' : 'disabled'}></td><td class="number">${number(row.total_cbm).toFixed(3)}</td><td class="number">${number(row.cbm_per_sku).toFixed(3)}</td><td class="number">${number(row.length).toFixed(2)}</td><td class="number">${number(row.width).toFixed(2)}</td><td class="number">${number(row.height).toFixed(2)}</td><td><button class="row-action" type="button" data-split-row-id="${row.id}">Tách</button></td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="18" class="muted">Không có dữ liệu.</td></tr>';
+        sortedRows.forEach(row => {
+          const checkbox = $('detailBody').querySelector(`input[data-row-id="${row.id}"]`);
+          if (selectedRows.has(row.id) && checkbox) {
+            const selectedQty = number(splitQuantities.get(row.id) ?? 0);
+            checkbox.closest('tr').children[10].textContent = Math.max(0, number(row.qty_inventory) - selectedQty).toLocaleString('vi-VN');
+          }
+          if (availableQty(row) > 0) return;
+          const splitButton = $('detailBody').querySelector(`button[data-split-row-id="${row.id}"]`);
+          if (checkbox) { checkbox.disabled = true; checkbox.title = 'Tồn kho bằng 0'; }
+          if (splitButton) splitButton.disabled = true;
+        });
+        $('recordStatus').textContent = `${sortedRows.length.toLocaleString('vi-VN')} dòng`;
+        updateSelectedStatus();
+      }
+      function renderCurrentView() {
+        const visibleRows = getVisibleRows();
+        const summary = Object.values(visibleRows.reduce((groups, row) => {
+          const fdc = String(row.fdc || '').trim() || 'Chua map';
+          if (!groups[fdc]) groups[fdc] = { fdc, carton_qty: 0, total_cbm: 0 };
+          groups[fdc].carton_qty += number(row.carton_qty);
+          groups[fdc].total_cbm += number(row.total_cbm);
+          return groups;
+        }, {})).map(row => ({ ...row, total_cbm: Number(row.total_cbm.toFixed(3)) }));
+        renderSummary(summary);
+        renderDetails(visibleRows);
+      }
+      async function loadPickingList(pickingNo, preserveSelection = false) {
+        const previousSelection = preserveSelection ? [...selectedRows].map(id => [id, number(splitQuantities.get(id))]) : [];
+        $('notice').hidden = true;
+        const query = new URLSearchParams({ connectionString });
+        if (pickingNo) query.set('picking_no', pickingNo);
+        const response = await fetch(`${api}/api/pickinglist?${query}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải Picking List.');
+        const pickingNos = (payload.pickingNos || []).map(String);
+        if (pickingNo && pickingNos.length && !pickingNos.includes(String(pickingNo))) return loadPickingList(pickingNos[0], preserveSelection);
+        $('pickingNo').innerHTML = pickingNos.length ? pickingNos.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('') : '<option value="">Không có Picking No</option>';
+        $('pickingNo').value = pickingNos.includes(String(pickingNo)) ? String(pickingNo) : String(payload.pickingNo || pickingNos[0] || '');
+        rows = payload.rows || [];
+        selectedRows.clear();
+        splitQuantities.clear();
+        previousSelection.forEach(([id, splitQty]) => {
+          const row = rows.find(item => item.id === id);
+          if (!row || number(row.carton_qty) <= 0) return;
+          selectedRows.add(id);
+          splitQuantities.set(id, Math.min(splitQty, availableQty(row)));
+        });
+        const fdcs = [...new Set(rows.map(row => String(row.fdc || '').trim()).filter(Boolean))].sort();
+        $('fdcFilter').innerHTML = '<option value="">Tất cả FDC</option>' + fdcs.map(fdc => `<option value="${escapeHtml(fdc)}">${escapeHtml(fdc)}</option>`).join('');
+        renderCurrentView();
+      }
+      async function loadInitial() {
+        try { await loadPickingList(''); } catch (error) { showError(error.message); renderSummary([]); renderDetails([]); }
+      }
+      $('pickingNo').addEventListener('change', () => loadPickingList($('pickingNo').value).catch(error => showError(error.message)));
+      $('fdcFilter').addEventListener('change', renderCurrentView);
+      $('detailBody').addEventListener('change', event => {
+        if (event.target.matches('input[data-row-id]')) {
+          const row = rows.find(item => String(item.id) === event.target.dataset.rowId);
+          if (row) toggleRow(row, event.target.checked);
+        }
+        if (event.target.matches('input[data-split-id]')) updateSplitQuantity(event.target.dataset.splitId, event.target.value);
+      });
+      $('detailBody').addEventListener('click', event => {
+        const button = event.target.closest('button[data-split-row-id]');
+        if (button) openSplitDialog(button.dataset.splitRowId);
+      });
+      $('splitQtyInput').addEventListener('input', updateSplitCalculation);
+      $('splitForm').addEventListener('submit', confirmSplit);
+      $('cancelSplitBtn').addEventListener('click', () => { $('splitModal').hidden = true; });
+      $('splitModal').addEventListener('click', event => { if (event.target === $('splitModal')) $('splitModal').hidden = true; });
+      createExportDialog();
+      const exportBtn = document.createElement('button');
+      exportBtn.className = 'ghost'; exportBtn.type = 'button'; exportBtn.textContent = 'Xuất sang Outbound';
+      $('splitBtn').insertAdjacentElement('beforebegin', exportBtn);
+      exportBtn.addEventListener('click', openExportModal);
+      $('splitBtn').addEventListener('click', openSelectedSplitDialog);
+      $('deleteSelectedBtn').addEventListener('click', deleteSelectedRows);
+      $('refreshBtn').addEventListener('click', () => loadPickingList($('pickingNo').value).catch(error => showError(error.message)));
+      loadInitial();
+    </script>
+  </body>
+</html>

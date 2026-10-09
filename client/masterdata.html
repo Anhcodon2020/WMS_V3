@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Masterdata SKU</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+      :root { --bg: #f3f6fb; --panel: #fff; --border: #dfe7f5; --text: #14213d; --muted: #5b6b8a; --primary: #2563eb; --danger: #b91c1c; }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--text); font-family: Inter, 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #edf4ff, #f8fafc); }
+      .shell { display: flex; min-height: 100vh; }
+      aside { width: 240px; padding: 22px 16px; color: #e2e8f0; background: linear-gradient(180deg, #101c38, #16284a); }
+      .brand { display: flex; align-items: center; gap: 12px; padding: 8px 10px 18px; border-bottom: 1px solid #ffffff2e; font-weight: 700; }
+      .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #2563eb; }
+      nav { display: grid; gap: 8px; margin-top: 18px; }
+      nav a { padding: 11px 12px; border-radius: 12px; color: #dfeafc; text-decoration: none; font-weight: 600; }
+      nav a.active, nav a:hover { color: #fff; background: #60a5fa2e; }
+      main { flex: 1; padding: 30px 24px 40px; min-width: 0; }
+      .page { max-width: 1600px; margin: auto; }
+      .topbar, .card-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      h1, h2 { margin: 0; } h1 { font-size: 2rem; } h2 { font-size: 1.15rem; }
+      .muted { color: var(--muted); }
+      .card { margin-top: 20px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--panel); box-shadow: 0 10px 30px #0f172a14; }
+      .controls, .form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+      label { display: grid; gap: 7px; color: var(--muted); font-size: .88rem; font-weight: 600; }
+      input { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: #f8fafc; }
+      button { border: 0; border-radius: 9px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+      .primary { color: white; background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+      .ghost { color: var(--text); background: #edf2ff; }
+      .danger { color: var(--danger); background: #fef2f2; }
+      .actions { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+      .notice { margin-top: 14px; padding: 10px 12px; border-radius: 9px; background: #ecfdf5; color: #065f46; }
+      .table-wrap { overflow: auto; margin-top: 16px; }
+      table { width: 100%; min-width: 1450px; border-collapse: collapse; }
+      th, td { padding: 10px 9px; text-align: left; border-bottom: 1px solid #edf2f7; white-space: nowrap; }
+      th { color: var(--muted); background: #f8fafc; font-size: .78rem; text-transform: uppercase; }
+      .row-actions { display: flex; gap: 7px; }
+      .edit-form { display: none; }
+      .edit-form.open { display: block; }
+      @media (max-width: 900px) { aside { display: none; } main { padding: 20px 14px; } .controls, .form-grid { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 560px) { .controls, .form-grid { grid-template-columns: 1fr; } .topbar { align-items: flex-start; flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div>
+        <nav aria-label="Main navigation">
+          <a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a>
+          <a class="active" href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a>
+          <a href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a>
+          <a href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a>
+          <a href="pickinglist.html" target="_blank" rel="noopener noreferrer">📋 Picking List</a>
+          <a href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a>
+          <a href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a>
+          <a href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 BBR Report</a>
+          <a href="updateloc.html" target="_blank" rel="noopener noreferrer">📍 Update location</a>
+          <a href="#" target="_blank" rel="noopener noreferrer">⚙️ Settings</a>
+        </nav>
+      </aside>
+      <main>
+        <div class="page">
+          <header class="topbar">
+            <div><p class="muted">Warehouse Management System</p><h1>Masterdata SKU</h1></div>
+            <div class="actions">
+              <button class="ghost" id="downloadTemplateBtn" type="button">Tải template Excel</button>
+              <label class="primary" style="padding:10px 14px;border-radius:9px;cursor:pointer">Import Excel<input id="importFile" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+            </div>
+          </header>
+          <section class="card">
+            <div class="card-header"><h2>Import masterdata</h2><span class="muted">Upsert theo MANCC + SKU</span></div>
+            <p class="muted">Cột template: CodeSup, sku, qty, weight, Lenght(cm), width(cm), Height(cm).</p>
+            <div id="notice" class="notice" hidden></div>
+          </section>
+          <section class="card edit-form" id="editCard">
+            <div class="card-header"><h2>Sửa masterdata</h2><button class="ghost" id="cancelEditBtn" type="button">Hủy</button></div>
+            <form id="editForm" class="form-grid">
+              <input id="editId" type="hidden">
+              <label>MANCC<input id="editMancc" required></label><label>SKU<input id="editSku" required></label><label>Số lượng<input id="editQuantity" type="number"></label><label>Số kg<input id="editWeight" type="number" step="any"></label>
+              <label>Lenght(cm)<input id="editLength" type="number" step="any"></label><label>Width(cm)<input id="editWidth" type="number" step="any"></label><label>Height(cm)<input id="editHeight" type="number" step="any"></label><label>CBM<input id="editCbm" type="number" step="any" readonly></label><label>Refix<input id="editRefix"></label>
+              <label>Loosecase<input id="editLoosecase"></label><label>Carton/Pallet<input id="editCartonPerPallet" type="number" step="any"></label><label>Kind pallet<input id="editKindPallet"></label><label>Chipboard<input id="editChipboard"></label><label>Remark<input id="editRemark"></label>
+              <div><button class="primary" type="submit">Lưu thay đổi</button></div>
+            </form>
+          </section>
+          <section class="card">
+            <div class="card-header"><h2>Chi tiết SKU</h2><div class="actions"><input id="searchSkuInput" placeholder="Tìm theo SKU..." aria-label="Tìm theo SKU"><button class="ghost" id="refreshBtn" type="button">Làm mới</button></div></div>
+            <div class="table-wrap"><table><thead><tr><th>ID</th><th>MANCC</th><th>Nhà cung cấp</th><th>SKU</th><th>Qty</th><th>Kg</th><th>L</th><th>W</th><th>H</th><th>CBM</th><th>Refix</th><th>CTN/PLT</th><th>Kind pallet</th><th>Loosecase</th><th>Chipboard</th><th>Remark</th><th>Thao tác</th></tr></thead><tbody id="masterdataBody"></tbody></table></div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005';
+      const $ = id => document.getElementById(id);
+      let masterRows = [];
+      const notice = $('notice');
+      function showNotice(message, error = false) { notice.hidden = false; notice.textContent = message; notice.style.background = error ? '#fef2f2' : '#ecfdf5'; notice.style.color = error ? '#b91c1c' : '#065f46'; }
+      function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }
+      function updateEditCbm() { $('editCbm').value = ((number($('editLength').value) * number($('editWidth').value) * number($('editHeight').value)) / 1000000).toFixed(6); }
+      function rowPayload(row) { return { MANCC: row.MANCC, sku: row.sku, quantity: number(row.quantity ?? row.qty), weight: number(row.weight), lenght: number(row.lenght ?? row.length), width: number(row.width), height: number(row.height), refix: row.refix || '', loosecase: row.loosecase || '', cartonperpallet: number(row.cartonperpallet), kindpallet: row.kindpallet || '', chipboard: row.chipboard || '', remark: row.remark || '' }; }
+      async function loadRows() { const response = await fetch(`${api}/api/masterdata?connectionString=${encodeURIComponent(connectionString)}`); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải masterdata.'); masterRows = payload.rows || []; $('masterdataBody').innerHTML = masterRows.map(row => `<tr><td>${row.id || ''}</td><td>${row.MANCC || ''}</td><td>${row.supplierName || ''}</td><td>${row.sku || ''}</td><td>${row.quantity ?? ''}</td><td>${row.weight != null ? Math.round(row.weight) : ''}</td><td>${row.length !=null ? Number(row.length).toFixed(2):''}</td><td>${row.width!=null ? Number(row.width).toFixed(2):''}</td><td>${row.height !=null ? Number(row.height).toFixed(2):''}</td><td>${number(row.cbm).toFixed(3)}</td><td>${row.refix || ''}</td><td>${row.cartonperpallet ?? ''}</td><td>${row.kindpallet || ''}</td><td>${row.loosecase || ''}</td><td>${row.chipboard || ''}</td><td>${row.remark || ''}</td><td><div class="row-actions"><button class="ghost" data-edit="${row.id}" type="button">Sửa</button><button class="danger" data-delete="${row.id}" type="button">Xóa</button></div></td></tr>`).join(''); }
+      function applySkuSearch() { const keyword = $('searchSkuInput').value.trim().toLowerCase(); [...$('masterdataBody').rows].forEach(row => { const sku = String(row.cells[3]?.textContent || '').toLowerCase(); row.hidden = Boolean(keyword) && !sku.includes(keyword); }); }
+      function downloadTemplate() { const data = [['CodeSup', 'sku', 'qty', 'weight', 'Lenght(cm)', 'width(cm)', 'Height(cm)'], ['SUP001', 'SKU00001', 10, 2.5, 40, 30, 20]]; const sheet = XLSX.utils.aoa_to_sheet(data); const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, sheet, 'masterdata'); XLSX.writeFile(book, 'masterdata_template.xlsx'); }
+      async function importFile(file) { const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' }); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' }); const response = await fetch(`${api}/api/masterdata/import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connectionString, rows }) }); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message || 'Import thất bại.'); showNotice(`Import xong: thêm ${payload.inserted}, cập nhật ${payload.updated}, từ chối ${payload.rejected.length}. ${payload.rejected.map(item => `Dòng ${item.row}: ${item.reason}`).join(' ')}`); await loadRows(); }
+      function openEdit(row) { $('editCard').classList.add('open'); $('editId').value = row.id; $('editMancc').value = row.MANCC || ''; $('editSku').value = row.sku || ''; $('editQuantity').value = row.quantity || 0; $('editWeight').value = row.weight || 0; $('editLength').value = row.length || 0; $('editWidth').value = row.width || 0; $('editHeight').value = row.height || 0; updateEditCbm(); $('editRefix').value = row.refix || ''; $('editLoosecase').value = row.loosecase || ''; $('editCartonPerPallet').value = row.cartonperpallet || 0; $('editKindPallet').value = row.kindpallet || ''; $('editChipboard').value = row.chipboard || ''; $('editRemark').value = row.remark || ''; $('editCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      $('downloadTemplateBtn').addEventListener('click', downloadTemplate);
+      $('importFile').addEventListener('change', event => event.target.files[0] && importFile(event.target.files[0]).catch(error => showNotice(error.message, true)));
+      $('refreshBtn').addEventListener('click', () => loadRows().catch(error => showNotice(error.message, true)));
+      $('searchSkuInput').addEventListener('input', applySkuSearch);
+      $('cancelEditBtn').addEventListener('click', () => $('editCard').classList.remove('open'));
+      ['editLength', 'editWidth', 'editHeight'].forEach(id => $(id).addEventListener('input', updateEditCbm));
+      $('masterdataBody').addEventListener('click', event => { const editId = event.target.dataset.edit; const deleteId = event.target.dataset.delete; if (editId) openEdit(masterRows.find(row => String(row.id) === String(editId))); if (deleteId && confirm(`Xóa masterdata id ${deleteId}?`)) fetch(`${api}/api/masterdata/${deleteId}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connectionString }) }).then(response => response.json()).then(payload => { if (!payload.ok) throw new Error(payload.message); showNotice(`Đã xóa id ${deleteId}.`); return loadRows(); }).catch(error => showNotice(error.message, true)); });
+      $('editForm').addEventListener('submit', event => { event.preventDefault(); const row = { MANCC: $('editMancc').value, sku: $('editSku').value, quantity: $('editQuantity').value, weight: $('editWeight').value, lenght: $('editLength').value, width: $('editWidth').value, height: $('editHeight').value, cbm: $('editCbm').value, refix: $('editRefix').value, loosecase: $('editLoosecase').value, cartonperpallet: $('editCartonPerPallet').value, kindpallet: $('editKindPallet').value, chipboard: $('editChipboard').value, remark: $('editRemark').value }; fetch(`${api}/api/masterdata/${$('editId').value}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connectionString, row }) }).then(response => response.json()).then(payload => { if (!payload.ok) throw new Error(payload.message); $('editCard').classList.remove('open'); showNotice('Đã cập nhật masterdata.'); return loadRows(); }).catch(error => showNotice(error.message, true)); });
+      loadRows().catch(error => showNotice(error.message, true));
+    </script>
+  </body>
+</html>

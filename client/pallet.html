@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pallet | WMS</title>
+  <style>
+    :root { --ink:#172033; --muted:#64748b; --line:#e2e8f0; --bg:#f5f7fb; --panel:#fff; --blue:#2563eb; --green:#16a34a; --red:#dc2626; --amber:#d97706; --shadow:0 10px 28px rgba(15,23,42,.07); }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--bg); font:14px/1.5 Inter,"Segoe UI",Arial,sans-serif; }
+    button,input,select,textarea { font:inherit; } button { cursor:pointer; }
+    .topbar { height:68px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; color:#fff; background:#172033; }
+    .brand { display:flex; align-items:center; gap:12px; } .brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:10px; background:var(--blue); font-size:20px; } .brand strong { display:block; font-size:15px; } .brand small { color:#a8b5c9; } .date { color:#cbd5e1; }
+    .layout { display:flex; min-height:calc(100vh - 68px); } .sidebar { width:224px; flex:none; padding:18px 12px; background:#fff; border-right:1px solid var(--line); } .nav { display:grid; gap:4px; } .nav a { padding:10px 12px; color:#475569; border-radius:8px; text-decoration:none; } .nav a:hover { background:#eff6ff; color:var(--blue); } .nav a.active { color:#fff; background:var(--blue); font-weight:700; }
+    main { width:min(100%,1600px); margin:0 auto; padding:28px; } .page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; } .eyebrow { margin:0 0 4px; color:var(--blue); font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; } h1,h2,p { margin:0; } h1 { font-size:28px; } h2 { font-size:17px; } .muted { color:var(--muted); }
+    .btn { border:0; border-radius:8px; padding:10px 15px; font-weight:700; } .btn:disabled { opacity:.6; cursor:wait; } .btn-primary { color:#fff; background:var(--blue); } .btn-primary:hover { background:#1d4ed8; } .btn-light { color:var(--ink); background:#eef2f7; } .btn-in { color:#fff; background:var(--green); } .btn-out { color:#fff; background:var(--red); }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:20px; } .stat,.panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); } .stat { padding:17px; } .stat span { display:block; color:var(--muted); font-size:12px; font-weight:700; } .stat strong { display:block; margin-top:8px; font-size:28px; } .blue strong { color:var(--blue); } .green strong { color:var(--green); } .red strong { color:var(--red); } .amber strong { color:var(--amber); }
+    .panel { padding:20px; margin-bottom:20px; } .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; } .balance-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; } .balance-card { padding:16px; border:1px solid var(--line); border-radius:10px; background:#f8fafc; } .balance-card header { display:flex; justify-content:space-between; gap:8px; color:var(--muted); font-size:12px; font-weight:700; } .balance-card strong { display:block; margin:10px 0; font-size:26px; } .balance-card footer { display:flex; justify-content:space-between; color:var(--muted); font-size:12px; }
+    .forms,.tables { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; } .form-title { display:flex; align-items:center; gap:8px; margin-bottom:16px; font-weight:800; font-size:17px; } .form-title.in { color:var(--green); } .form-title.out { color:var(--red); } .fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; } label { display:grid; gap:6px; color:#475569; font-size:12px; font-weight:700; } label.full { grid-column:1/-1; }
+    input,select,textarea { width:100%; padding:10px 11px; color:var(--ink); background:#fff; border:1px solid #cbd5e1; border-radius:7px; outline:0; } input:focus,select:focus,textarea:focus { border-color:var(--blue); box-shadow:0 0 0 3px #dbeafe; } textarea { min-height:74px; resize:vertical; } .actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+    .table-tools { margin-bottom:12px; } .table-wrap { overflow:auto; max-height:390px; border:1px solid var(--line); border-radius:8px; } table { width:100%; min-width:520px; border-collapse:collapse; font-size:13px; } th,td { padding:10px 12px; text-align:left; border-bottom:1px solid #eef2f7; white-space:nowrap; } th { position:sticky; top:0; color:#475569; background:#f8fafc; font-size:12px; } tbody tr:hover { background:#f8fafc; } .tag { display:inline-block; padding:3px 8px; border-radius:5px; color:#1d4ed8; background:#dbeafe; font-weight:800; } .positive { color:var(--green); font-weight:800; } .negative { color:var(--red); font-weight:800; } .empty { padding:24px; color:var(--muted); text-align:center; }
+    #toast { position:fixed; top:82px; right:20px; z-index:10; display:grid; gap:8px; max-width:360px; } .toast { padding:12px 15px; color:#172033; background:#fff; border-left:4px solid var(--blue); border-radius:7px; box-shadow:var(--shadow); } .toast.error { border-color:var(--red); }
+    @media (max-width:1050px) { .stats { grid-template-columns:repeat(2,1fr); } .forms,.tables { grid-template-columns:1fr; } }
+    @media (max-width:700px) { .topbar { height:auto; padding:14px 16px; } .date { display:none; } .layout { display:block; } .sidebar { width:100%; border-right:0; border-bottom:1px solid var(--line); overflow:auto; } .nav { display:flex; gap:4px; width:max-content; } .nav a { white-space:nowrap; } main { padding:20px 14px; } .page-head { align-items:flex-start; flex-direction:column; } .stats { grid-template-columns:1fr 1fr; gap:10px; } .stat { padding:14px; } .stat strong { font-size:23px; } .fields { grid-template-columns:1fr; } label.full { grid-column:auto; } }
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="brand"><div class="brand-mark">P</div><div><strong>Warehouse Management System</strong><small>Pallet control</small></div></div><span class="date" id="currentDate"></span></header>
+  <div class="layout">
+    <aside class="sidebar"><nav class="nav"><a href="index.html" target="_blank" rel="noopener noreferrer">Dashboard</a><a href="masterdata.html" target="_blank" rel="noopener noreferrer">Masterdata</a><a href="supplier.html" target="_blank" rel="noopener noreferrer">Nhà cung cấp</a><a href="outbound.html" target="_blank" rel="noopener noreferrer">Outbound</a><a href="inventory.html" target="_blank" rel="noopener noreferrer">Inventory</a><a href="transaction.html" target="_blank" rel="noopener noreferrer">Transaction</a><a href="bbrreport.html" target="_blank" rel="noopener noreferrer">BBR Report</a><a href="updateloc.html" target="_blank" rel="noopener noreferrer">Update location</a><a href="Updateclp.html" target="_blank" rel="noopener noreferrer">Update CLP</a><a class="active" href="pallet.html" target="_blank" rel="noopener noreferrer">Pallet</a></nav></aside>
+    <main>
+      <div class="page-head"><div><p class="eyebrow">Pallet management</p><h1>Quản lý pallet</h1><p class="muted">Theo dõi nhập, xuất và số dư pallet theo từng loại.</p></div><button class="btn btn-primary" id="refreshBtn" type="button">Làm mới dữ liệu</button></div>
+      <section class="stats"><article class="stat blue"><span>TỔNG NHẬP</span><strong id="totalIn">0</strong></article><article class="stat red"><span>TỔNG XUẤT</span><strong id="totalOut">0</strong></article><article class="stat green"><span>SỐ DƯ</span><strong id="balance">0</strong></article><article class="stat amber"><span>GIAO DỊCH</span><strong id="transactions">0</strong></article></section>
+      <section class="panel"><div class="panel-head"><div><h2>Số dư theo loại pallet</h2><p class="muted">Số dư được tính từ tổng nhập trừ tổng xuất.</p></div><span class="muted" id="balanceStatus">Đang tải...</span></div><div class="balance-grid" id="balanceGrid"><div class="empty">Đang tải dữ liệu...</div></div></section>
+      <section class="forms">
+        <form class="panel" id="inForm"><div class="form-title in"><span>↓</span> Nhập pallet</div><div class="fields"><label>Ngày nhập *<input id="inDate" type="date" required></label><label>Loại pallet *<select id="inType" required><option value="">Chọn loại pallet</option></select></label><label>Số lượng *<input id="inQty" type="number" min="1" step="1" required></label><label class="full">Ghi chú<textarea id="inRemark" placeholder="Thông tin thêm"></textarea></label></div><div class="actions"><button class="btn btn-light" id="clearIn" type="button">Xóa</button><button class="btn btn-in" id="submitIn" type="submit">Xác nhận nhập</button></div></form>
+        <form class="panel" id="outForm"><div class="form-title out"><span>↑</span> Xuất pallet</div><div class="fields"><label>Ngày xuất *<input id="outDate" type="date" required></label><label>Loại pallet *<select id="outType" required><option value="">Chọn loại pallet</option></select></label><label>Job No theo ngày đóng<select id="outJobno"><option value="">Chọn Job No</option></select></label><label>Số lượng *<input id="outQty" type="number" min="1" step="1" required readonly></label><label class="full">Shipment *<input id="outShipment" maxlength="50" required placeholder="Tự động theo Job No"></label></div><div class="actions"><button class="btn btn-light" id="clearOut" type="button">Xóa</button><button class="btn btn-out" id="submitOut" type="submit">Xác nhận xuất</button></div></form>
+      </section>
+      <section class="tables">
+        <article class="panel"><div class="panel-head"><h2>Lịch sử nhập <span class="tag">IN</span></h2><span class="muted" id="inCount">0 dòng</span></div><div class="table-tools"><input id="searchIn" placeholder="Tìm ngày, loại pallet, ghi chú"></div><div class="table-wrap"><table><thead><tr><th>STT</th><th>Ngày</th><th>Loại</th><th>Số lượng</th><th>Ghi chú</th></tr></thead><tbody id="inBody"></tbody></table></div></article>
+        <article class="panel"><div class="panel-head"><h2>Lịch sử xuất <span class="tag">OUT</span></h2><span class="muted" id="outCount">0 dòng</span></div><div class="table-tools"><input id="searchOut" placeholder="Tìm ngày, loại pallet, shipment"></div><div class="table-wrap"><table><thead><tr><th>STT</th><th>Ngày</th><th>Loại</th><th>Số lượng</th><th>Shipment</th></tr></thead><tbody id="outBody"></tbody></table></div></article>
+      </section>
+    </main>
+  </div><div id="toast"></div>
+  <script>
+    const API = 'http://localhost:3005';
+    const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+    let types = [], summary = [], inRows = [], outRows = [];
+    const $ = id => document.getElementById(id);
+    const today = () => { const parts = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Ho_Chi_Minh', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date()); const values = Object.fromEntries(parts.map(part => [part.type, part.value])); return `${values.year}-${values.month}-${values.day}`; };
+    const fmt = value => Number(value || 0).toLocaleString('en-US');
+    const date = value => { const text = String(value || '').slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text.split('-').reverse().join('/') : ''; };
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+    function toast(message, error = false) { const item = document.createElement('div'); item.className = `toast${error ? ' error' : ''}`; item.textContent = message; $('toast').append(item); setTimeout(() => item.remove(), 3500); }
+    async function request(path, options = {}) { const response = await fetch(`${API}${path}`, { ...options, headers: {'Content-Type':'application/json', ...(options.headers || {})} }); const payload = await response.json().catch(() => ({})); if (!response.ok || payload.ok === false) throw new Error(payload.message || `HTTP ${response.status}`); return payload; }
+    function query(path) { return `${path}${path.includes('?') ? '&' : '?'}connectionString=${encodeURIComponent(connectionString)}`; }
+    function typeName(id) { const row = types.find(item => Number(item.id) === Number(id)) || summary.find(item => Number(item.pallet_type_id) === Number(id)); return row ? `${row.pallet_size}M` : `#${id}`; }
+    function setOptions() { ['inType','outType'].forEach(id => { $(id).innerHTML = '<option value="">Chọn loại pallet</option>' + types.map(item => `<option value="${Number(item.id)}">${esc(item.pallet_size)}</option>`).join(''); }); }
+    function renderSummary(data) { summary = data.items || []; const total = data.total || {}; $('totalIn').textContent = fmt(total.total_in); $('totalOut').textContent = fmt(total.total_out); $('balance').textContent = fmt(total.balance); $('transactions').textContent = fmt(total.transactions ?? inRows.length + outRows.length); $('balanceStatus').textContent = Number(total.balance) < 0 ? 'Thiếu pallet' : 'Đang khả dụng'; $('balanceGrid').innerHTML = summary.length ? summary.map(row => `<article class="balance-card"><header><span>Pallet ${esc(row.pallet_size)}</span><span>#${row.pallet_type_id}</span></header><strong class="${Number(row.balance) < 0 ? 'negative' : ''}">${fmt(row.balance)}</strong><footer><span>IN <b class="positive">${fmt(row.total_in)}</b></span><span>OUT <b class="negative">${fmt(row.total_out)}</b></span></footer></article>`).join('') : '<div class="empty">Chưa có loại pallet.</div>'; }
+    function renderTable(kind) { const source = kind === 'in' ? inRows : outRows; const keyword = $(kind === 'in' ? 'searchIn' : 'searchOut').value.trim().toLowerCase(); const filtered = source.filter(row => `${row.trans_date} ${typeName(row.pallet_type_id)} ${row.quantity} ${row.ghichu || ''} ${row.shipment || ''}`.toLowerCase().includes(keyword)); const body = $(kind === 'in' ? 'inBody' : 'outBody'); body.innerHTML = filtered.length ? filtered.map((row, index) => `<tr><td>${index + 1}</td><td>${date(row.trans_date)}</td><td><span class="tag">${esc(typeName(row.pallet_type_id))}</span></td><td class="${kind === 'in' ? 'positive' : 'negative'}">${kind === 'in' ? '+' : '-'}${fmt(row.quantity)}</td><td>${esc(kind === 'in' ? row.ghichu : row.shipment)}</td></tr>`).join('') : '<tr><td class="empty" colspan="5">Không có dữ liệu</td></tr>'; $(kind === 'in' ? 'inCount' : 'outCount').textContent = `${filtered.length} dòng`; }
+    
+    async function load() { 
+      $('refreshBtn').disabled = true; 
+      try { 
+        const [typeData, inData, outData, summaryData] = await Promise.all([
+          request(query('/api/pallet/types')), 
+          request(query('/api/pallet/in')), 
+          request(query('/api/pallet/out')), 
+          request(query('/api/pallet/summary'))
+        ]); 
+        types = typeData.data || []; 
+        inRows = inData.data || []; 
+        outRows = outData.data || []; 
+        setOptions(); 
+        renderSummary(summaryData.data || {}); 
+        renderTable('in'); 
+        renderTable('out'); 
+      } catch (error) { 
+        toast(error.message, true); 
+      } finally { 
+        $('refreshBtn').disabled = false; 
+      } 
+    }
+    
+    function reset(kind, keepOutboundMapping = false) { 
+      if (!(kind === 'out' && keepOutboundMapping)) $(kind === 'in' ? 'inDate' : 'outDate').value = today();
+      $(kind === 'in' ? 'inType' : 'outType').value = ''; 
+      $(kind === 'in' ? 'inQty' : 'outQty').value = ''; 
+      if (kind === 'in') $('inRemark').value = ''; 
+      else if (!keepOutboundMapping) { $('outJobno').value = ''; $('outShipment').value = ''; }
+    }
+
+    async function loadOutboundJobs(selectedDate) {
+      const jobSelect = $('outJobno');
+      jobSelect.innerHTML = '<option value="">Đang tải Job No...</option>';
+      jobSelect.disabled = true;
+      $('outQty').value = '';
+      $('outShipment').value = '';
+      try {
+        const payload = await request(query(`/api/pallet/outbound-jobs?date=${encodeURIComponent(selectedDate)}`));
+        const jobs = payload.jobs || [];
+        jobSelect.innerHTML = '<option value="">Chọn Job No</option>' + jobs.map(row => `<option value="${esc(row.jobno)}" data-shipment="${esc(row.shipmentorder || '')}">${esc(row.jobno)}</option>`).join('');
+        if (!jobs.length) jobSelect.innerHTML = '<option value="">Không có Job No trong ngày này</option>';
+      } catch (error) {
+        jobSelect.innerHTML = '<option value="">Không tải được Job No</option>';
+        toast(error.message, true);
+      } finally {
+        jobSelect.disabled = false;
+      }
+    }
+
+    function setShipmentFromJob() {
+      const option = $('outJobno').selectedOptions[0];
+      $('outShipment').value = option?.dataset.shipment || '';
+    }
+
+    function getScanPalletType() {
+      const label = $('outType').selectedOptions[0]?.textContent.trim().toLowerCase().replace(/\s/g, '') || '';
+      if (label === '1m2' || label === '1.2' || label === '1.2m') return '1.2';
+      if (label === '1m6' || label === '1.6' || label === '1.6m') return '1.6';
+      if (label === '1m9' || label === '1.9' || label === '1.9m') return '1.9';
+      return '';
+    }
+
+    async function loadScanPalletQuantity() {
+      const jobno = $('outJobno').value;
+      const palletType = getScanPalletType();
+      $('outQty').value = '';
+      if (!jobno || !palletType) return;
+      try {
+        const payload = await request(query(`/api/pallet/scan-quantity?jobno=${encodeURIComponent(jobno)}&pallet_type=${encodeURIComponent(palletType)}`));
+        $('outQty').value = payload.quantity || 0;
+      } catch (error) {
+        toast(error.message, true);
+      }
+    }
+
+    async function submit(kind, event) {
+      event.preventDefault();
+      const isInbound = kind === 'in';
+      const submitButton = $(isInbound ? 'submitIn' : 'submitOut');
+      const payload = {
+        connectionString,
+        trans_date: $(isInbound ? 'inDate' : 'outDate').value,
+        pallet_type_id: Number($(isInbound ? 'inType' : 'outType').value),
+        quantity: Number($(isInbound ? 'inQty' : 'outQty').value)
+      };
+      if (isInbound) payload.ghichu = $('inRemark').value.trim();
+      else payload.shipment = $('outShipment').value.trim();
+
+      submitButton.disabled = true;
+      try {
+        await request(`/api/pallet/${kind}`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        toast(isInbound ? 'Đã nhập pallet thành công.' : 'Đã xuất pallet thành công.');
+        reset(kind, kind === 'out');
+        await load();
+      } catch (error) {
+        toast(error.message, true);
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+    
+    
+    
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      $('currentDate').textContent = date(today());
+      $('inDate').value = today();
+      $('outDate').value = today();
+      $('refreshBtn').addEventListener('click', load);
+      $('clearIn').addEventListener('click', () => reset('in'));
+      $('clearOut').addEventListener('click', () => reset('out'));
+      $('outDate').addEventListener('change', () => loadOutboundJobs($('outDate').value));
+      $('outJobno').addEventListener('change', () => { setShipmentFromJob(); loadScanPalletQuantity(); });
+      $('outType').addEventListener('change', loadScanPalletQuantity);
+      $('inForm').addEventListener('submit', event => submit('in', event));
+      $('outForm').addEventListener('submit', event => submit('out', event));
+      $('searchIn').addEventListener('input', () => renderTable('in'));
+      $('searchOut').addEventListener('input', () => renderTable('out'));
+      loadOutboundJobs($('outDate').value);
+      load();
+     
+   });
+    
+  </script>
+</body>
+</html>

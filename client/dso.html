@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DSO Import</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+      :root { --panel:#fff; --border:#dfe7f5; --text:#14213d; --muted:#5b6b8a; --primary:#2563eb; --danger:#b91c1c; }
+      * { box-sizing:border-box; } body { margin:0; color:var(--text); font-family:Inter,'Segoe UI',Arial,sans-serif; background:linear-gradient(180deg,#edf4ff,#f8fafc); }.shell { display:flex; min-height:100vh; } aside { width:240px; padding:22px 16px; color:#e2e8f0; background:linear-gradient(180deg,#101c38,#16284a); }.brand { display:flex; align-items:center; gap:12px; padding:8px 10px 18px; border-bottom:1px solid #ffffff2e; font-weight:700; }.brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:#2563eb; } nav { display:grid; gap:8px; margin-top:18px; } nav a { padding:11px 12px; border-radius:12px; color:#dfeafc; text-decoration:none; font-weight:600; } nav a.active,nav a:hover { color:#fff; background:#60a5fa2e; }
+      main { flex:1; min-width:0; padding:30px 24px 40px; }.page { max-width:1400px; margin:auto; }.topbar,.card-header,.actions { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; } h1,h2 { margin:0; } h1 { font-size:2rem; } h2 { font-size:1.15rem; }.muted { color:var(--muted); }.card { margin-top:20px; padding:20px; border:1px solid var(--border); border-radius:16px; background:var(--panel); box-shadow:0 10px 30px #0f172a14; }
+      button,.file-label { border:0; border-radius:9px; padding:10px 14px; cursor:pointer; font-weight:700; } input { min-width:220px; padding:10px 11px; border:1px solid var(--border); border-radius:9px; color:var(--text); background:#f8fafc; }.primary { color:#fff; background:linear-gradient(135deg,#2563eb,#1d4ed8); }.ghost { color:var(--text); background:#edf2ff; }.file-label { display:inline-block; color:var(--text); background:#edf2ff; }.file-label input { display:none; } button:disabled { cursor:not-allowed; opacity:.55; }.notice { margin-top:14px; padding:10px 12px; border-radius:9px; }.notice.ok { color:#065f46; background:#ecfdf5; }.notice.error { color:var(--danger); background:#fef2f2; }.process { margin-top:18px; padding:16px; border:1px solid var(--border); border-radius:12px; background:#f8fafc; }.process[hidden] { display:none; }.process-head { display:flex; justify-content:space-between; gap:12px; margin-bottom:10px; }.progress-track { height:10px; overflow:hidden; border-radius:6px; background:#dbeafe; }.progress-bar { width:0; height:100%; background:#2563eb; transition:width .2s ease; }.table-wrap { overflow:auto; margin-top:16px; } table { width:100%; min-width:720px; border-collapse:collapse; } th,td { padding:11px 9px; text-align:left; border-bottom:1px solid #edf2f7; white-space:nowrap; } th { color:var(--muted); background:#f8fafc; font-size:.78rem; text-transform:uppercase; }.count { padding:7px 10px; border-radius:8px; color:#1d4ed8; background:#eff6ff; font-weight:700; }
+      @media (max-width:900px) { aside { display:none; } main { padding:20px 14px; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside><div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div><nav aria-label="Main navigation"><a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a><a href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a><a href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a><a href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a><a href="outbound_product.html" target="_blank" rel="noopener noreferrer">📋 Outbound product</a><a class="active" href="dso.html">📥 DSO</a><a href="updatescan.html" target="_blank" rel="noopener noreferrer">🔎 Update scan</a><a href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a><a href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a><a href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 BBR Report</a></nav></aside>
+      <main><div class="page">
+        <header class="topbar"><div><p class="muted">Warehouse Management System</p><h1>DSO Import</h1></div><button class="ghost" id="refreshBtn" type="button">Làm mới</button></header>
+        <section class="card">
+          <div class="card-header"><h2>Import Excel</h2><span class="muted">Chỉ nhập dòng có cột C = 1. Mapping: A → release_key, C → status_dso, CM → childpo.</span></div>
+          <div class="actions" style="margin-top:16px"><label class="file-label">Chọn file Excel<input id="importFile" type="file" accept=".xlsx,.xls,.csv"></label><span id="fileName" class="muted">Chưa chọn file</span><button class="primary" id="importBtn" type="button" disabled>Import DSO</button></div>
+          <div id="notice" class="notice" hidden></div>
+          <div id="process" class="process" hidden><div class="process-head"><strong id="progressLabel">Đang chuẩn bị...</strong><strong id="progressValue">0%</strong></div><div class="progress-track"><div class="progress-bar" id="progressBar"></div></div></div>
+        </section>
+        <section class="card">
+          <div class="card-header"><h2>Dữ liệu DSO</h2><span class="count" id="rowCount">0 dòng</span></div>
+          <div class="actions" style="justify-content:flex-start;margin-top:16px"><input id="searchReleaseKey" type="search" placeholder="Tìm Release Key"><input id="searchChildPo" type="search" placeholder="Tìm Child PO"></div>
+          <div class="table-wrap"><table><thead><tr><th>Release Key</th><th>Status DSO</th><th>Child PO</th><th>Parent PO</th></tr></thead><tbody id="dsoBody"><tr><td colspan="4" class="muted">Đang tải dữ liệu...</td></tr></tbody></table></div>
+        </section>
+      </div></main>
+    </div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005';
+      const $ = id => document.getElementById(id);
+      const BATCH_SIZE = 500;
+      let searchTimer;
+      function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
+      function showNotice(message, error = false) { $('notice').hidden = false; $('notice').className = `notice ${error ? 'error' : 'ok'}`; $('notice').textContent = message; }
+      function setProgress(percent, label) { $('process').hidden = false; $('progressBar').style.width = `${percent}%`; $('progressValue').textContent = `${percent}%`; $('progressLabel').textContent = label; }
+      async function getJson(url, options) { const response = await fetch(url, options); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể xử lý dữ liệu.'); return payload; }
+      async function loadRows() { const query = new URLSearchParams({ connectionString, release_key:$('searchReleaseKey').value.trim(), child_po:$('searchChildPo').value.trim() }); const payload = await getJson(`${api}/api/dso?${query}`); $('rowCount').textContent = `${Number(payload.totalRows || 0).toLocaleString('vi-VN')} dòng`; $('dsoBody').innerHTML = (payload.rows || []).map(row => `<tr><td>${escapeHtml(row.release_key)}</td><td>${escapeHtml(row.status_dso)}</td><td>${escapeHtml(row.child_po)}</td><td>${escapeHtml(row.parentpo)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Không tìm thấy dữ liệu DSO phù hợp.</td></tr>'; }
+      async function importFile(file) {
+        if (!file) throw new Error('Vui lòng chọn file Excel.');
+        setProgress(5, 'Đang đọc file Excel...');
+        const workbook = XLSX.read(await file.arrayBuffer(), { type:'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const grid = XLSX.utils.sheet_to_json(sheet, { header:1, defval:'' });
+        setProgress(15, 'Đang lọc các dòng có cột C = 1...');
+        const rows = grid.slice(1).filter(cells => Number(String(cells[2] ?? '').trim()) === 1).map(cells => ({ release_key:String(cells[0] ?? '').trim(), status_dso:String(cells[2] ?? '').trim(), child_po:String(cells[90] ?? '').trim() }));
+        if (!rows.length) throw new Error('Không tìm thấy dòng nào có cột C = 1.');
+        setProgress(20, 'Đang xóa dữ liệu DSO cũ...');
+        const start = await getJson(`${api}/api/dso/import/start`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ connectionString }) });
+        let insertedRows = 0;
+        for (let index = 0; index < rows.length; index += BATCH_SIZE) {
+          const batch = rows.slice(index, index + BATCH_SIZE);
+          const payload = await getJson(`${api}/api/dso/import/batch`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ connectionString, rows:batch }) });
+          insertedRows += Number(payload.insertedRows || 0);
+          const completed = Math.min(index + batch.length, rows.length);
+          setProgress(20 + Math.round((completed / rows.length) * 75), `Đang lưu ${completed.toLocaleString('vi-VN')}/${rows.length.toLocaleString('vi-VN')} dòng...`);
+        }
+        setProgress(100, 'Import hoàn tất.');
+        showNotice(`Đã xóa ${Number(start.deletedRows || 0).toLocaleString('vi-VN')} dòng cũ và nhập ${insertedRows.toLocaleString('vi-VN')} dòng DSO.`, false);
+        await loadRows();
+      }
+      $('importFile').addEventListener('change', event => { const file = event.target.files[0]; $('fileName').textContent = file ? `${file.name} (${Math.round(file.size / 1024).toLocaleString('vi-VN')} KB)` : 'Chưa chọn file'; $('importBtn').disabled = !file; });
+      $('importBtn').addEventListener('click', async () => { const button = $('importBtn'); button.disabled = true; try { await importFile($('importFile').files[0]); } catch (error) { showNotice(error.message, true); setProgress(0, 'Import thất bại.'); } finally { button.disabled = !$('importFile').files[0]; } });
+      ['searchReleaseKey', 'searchChildPo'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadRows().catch(error => showNotice(error.message, true)), 250); }));
+      $('refreshBtn').addEventListener('click', () => loadRows().catch(error => showNotice(error.message, true)));
+      loadRows().catch(error => showNotice(error.message, true));
+    </script>
+  </body>
+</html>

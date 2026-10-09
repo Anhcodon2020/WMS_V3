@@ -1,0 +1,2051 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inbound Management</title>
+    <style>
+      :root {
+        --bg: #f3f6fb;
+        --panel: #ffffff;
+        --panel-alt: #eef4ff;
+        --border: #dfe7f5;
+        --text: #14213d;
+        --muted: #5b6b8a;
+        --primary: #2563eb;
+        --primary-dark: #1d4ed8;
+        --green: #10b981;
+        --amber: #f59e0b;
+        --red: #ef4444;
+        --blue: #3b82f6;
+        --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(180deg, #edf4ff 0%, #f8fafc 100%);
+        color: var(--text);
+      }
+
+      button, input, select {
+        font: inherit;
+      }
+
+      .app-shell {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 240px;
+        background: linear-gradient(180deg, #101c38 0%, #16284a 100%);
+        color: #e2e8f0;
+        padding: 22px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 10px 18px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      }
+
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa, #2563eb);
+        color: white;
+      }
+
+      .brand-name {
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 12px;
+        border-radius: 12px;
+        color: #dfeafc;
+        text-decoration: none;
+        font-weight: 600;
+        opacity: 0.8;
+      }
+
+      .nav-item.active {
+        background: rgba(96, 165, 250, 0.18);
+        border: 1px solid rgba(96, 165, 250, 0.25);
+        color: #ffffff;
+        opacity: 1;
+      }
+
+      .nav-item:hover {
+        background: rgba(148, 163, 184, 0.08);
+      }
+
+      .nav-badge {
+        margin-left: auto;
+        background: rgba(59, 130, 246, 0.2);
+        color: #dbeafe;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        padding: 3px 7px;
+      }
+
+      .content {
+        flex: 1;
+        padding: 30px 24px 40px;
+      }
+
+      .page {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--primary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 2vw, 2.5rem);
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .primary-btn, .ghost-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: var(--shadow);
+      }
+
+      .ghost-btn {
+        background: #edf2ff;
+        color: var(--text);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px 18px;
+        box-shadow: var(--shadow);
+      }
+
+      .stat-card span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin-bottom: 12px;
+      }
+
+      .stat-card strong {
+        font-size: 2rem;
+      }
+
+      .stat-card.blue { background: linear-gradient(180deg, #edf4ff 0%, #ffffff 100%); }
+      .stat-card.amber { background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%); }
+      .stat-card.green { background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%); }
+      .stat-card.red { background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%); }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 0.8fr;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+
+      input, select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        color: var(--text);
+      }
+
+      .full-span {
+        grid-column: 1 / -1;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .timeline {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .timeline li {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-top: 7px;
+      }
+
+      .dot.green { background: var(--green); }
+      .dot.blue { background: var(--blue); }
+      .dot.amber { background: var(--amber); }
+
+      .timeline strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .timeline p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 980px;
+      }
+
+      thead th {
+        background: #f8fafc;
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      tbody td {
+        padding: 13px 14px;
+        border-bottom: 1px solid #edf2f7;
+      }
+
+      tbody tr:hover {
+        background: #f8fbff;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .status-badge.đang-nhập {
+        background: #fff7ed;
+        color: #b45309;
+      }
+
+      .status-badge.chờ-kiểm-hàng {
+        background: #fef2f2;
+        color: #b91c1c;
+      }
+
+      .status-badge.hoàn-thành {
+        background: #ecfdf5;
+        color: #047857;
+      }
+
+      .summary-panel {
+        margin-top: 20px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .summary-panel h3 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+      }
+
+      .summary-panel table {
+        width: 100%;
+        min-width: 0;
+        border-collapse: collapse;
+      }
+
+      .summary-panel th, .summary-panel td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid #edf2f7;
+      }
+
+      .summary-panel th {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .toast {
+        margin-top: 16px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #ecfdf5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+        font-weight: 600;
+      }
+
+      .tally-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto auto;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .small-btn {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 10px;
+        background: #f8fafc;
+        color: var(--text);
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .small-btn.danger {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+      }
+
+      .edit-state {
+        margin: 0 0 14px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #fff7ed;
+        color: #9a3412;
+        font-weight: 600;
+      }
+
+      @media (max-width: 900px) {
+        .stats-grid, .content-grid, .field-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">W</div>
+          <div class="brand-name">WMS Hub</div>
+        </div>
+
+        <nav class="nav" aria-label="Main navigation">
+          <a class="nav-item" href="#" target="_blank" rel="noopener noreferrer">🏠 Dashboard</a>
+          <a class="nav-item active" href="#" target="_blank" rel="noopener noreferrer">📦 Inbound</a>
+          <a class="nav-item" href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a>
+          <a class="nav-item" href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a>
+          <a class="nav-item" href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound </a>
+          <a class="nav-item" href="pickinglist.html" target="_blank" rel="noopener noreferrer">📋 Picking List</a>
+          <a class="nav-item" href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a>
+          <a class="nav-item" href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a>
+          <a class="nav-item" href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 BBR Report</a>
+          <a class="nav-item" href="updateloc.html" target="_blank" rel="noopener noreferrer">📍 Update location</a>
+          <a class="nav-item" href="Updateclp.html" target="_blank" rel="noopener noreferrer">📑 Update CLP</a>
+          <a class="nav-item" href="pallet.html" target="_blank" rel="noopener noreferrer">📦 Pallet</a>
+          <a class="nav-item" href="#" target="_blank" rel="noopener noreferrer">⚙️ Settings</a>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <div class="page">
+          <header class="topbar">
+            <div>
+              <p class="eyebrow">Warehouse Management System</p>
+              <h1>Inbound Management</h1>
+              <div id="serverStatus" class="server-status disconnected">Kết nối server: kiểm tra...</div>
+            </div>
+            <button class="primary-btn" id="createInboundBtn" type="button">+ Tạo phiếu nhập kho</button>
+          </header>
+
+          <section class="stats-grid">
+            <div class="stat-card blue">
+              <span>Packing List hôm nay</span>
+              <strong id="totalCount">0</strong>
+            </div>
+            <div class="stat-card amber">
+              <span>Carton hôm nay</span>
+              <strong id="inProgressCount">0</strong>
+            </div>
+            <div class="stat-card green">
+              <span>CBM hôm nay</span>
+              <strong id="doneCount">0.0000</strong>
+            </div>
+            <div class="stat-card red">
+              <span>CBM tuần / Forecast</span>
+              <strong id="weeklyForecastPercent">0%</strong>
+              <small id="weeklyForecastDetail">Thực tế: 0.0000 / Forecast: 0.0000 CBM</small>
+            </div>
+          </section>
+
+          <section class="content-grid">
+            <form class="card" id="inboundForm">
+              <div class="card-header">
+                <h2>Thông tin nhập kho</h2>
+              </div>
+              <div id="editState" class="edit-state" hidden>Đang sửa phiếu inbound</div>
+
+              <div class="field-grid">
+                <label>
+                  Packing List No
+                  <input name="packingListNo" placeholder="Nhập số packing list..." required />
+                  <datalist id="packingListNo"></datalist>
+                </label>
+                <label>
+                  Parent PO
+                  <input name="parentPO" list="parentPOList" placeholder="Chọn Parent PO..." />
+                  <datalist id="parentPOList"></datalist>
+                </label>
+                <label>
+                  SKU
+                  <input name="sku" list="skuList" placeholder="Chọn SKU..." />
+                  <datalist id="skuList"></datalist>
+                </label>
+                <label>
+                  Mã nhà cung cấp
+                  <input name="supplier" readonly placeholder="Lấy từ bbrreport" />
+                </label>
+                <label>
+                  Số carton
+                  <input type="number" min="0" name="carton" value="1" />
+                </label>
+                <label>
+                  CBM
+                  <input name="cbm" readonly placeholder="Tự tính" />
+                </label>
+                <label>
+                  Cont / Xe
+                  <input name="contXe" placeholder="Nhập cont/xe..." />
+                </label>
+                <label>
+                  Labour
+                  <input name="labour" placeholder="Nhập labour..." />
+                </label>
+                <label>
+                  Ngày nhập
+                  <input type="date" name="receivedDate" />
+                </label>
+              </div>
+
+              <div class="summary-panel" id="packingSummaryPanel">
+                <h3>Tổng hợp Packing List No đang nhập</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Packing List No</th>
+                      <th>Tổng carton</th>
+                      <th>Tổng CBM</th>
+                    </tr>
+                  </thead>
+                  <tbody id="packingSummaryBody">
+                    <tr>
+                      <td colspan="3">Chưa có dữ liệu</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="saveToast" class="toast" hidden></div>
+
+              <div class="form-actions">
+                <button type="submit" class="primary-btn">Lưu phiếu nhập</button>
+                <button type="button" class="ghost-btn" id="cancelEditBtn" hidden>Hủy sửa</button>
+                <button type="button" class="ghost-btn" id="resetBtn">Xóa</button>
+              </div>
+            </form>
+
+            <aside class="card">
+              <div class="card-header">
+                <h2>Chi tiết ChildPO/SKU</h2>
+              </div>
+              <ul class="timeline" id="childPoTimeline">
+                <li>
+                  <span class="dot amber"></span>
+                  <div>
+                    <strong>Chưa có dữ liệu</strong>
+                    <p>Chọn Parent PO và SKU để map với BBRreport.</p>
+                  </div>
+                </li>
+              </ul>
+            </aside>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2>Tallysheet</h2>
+            </div>
+            <div class="tally-controls">
+              <label>
+                Ngày nhập hàng
+                <input type="date" id="tallyDateInput" />
+              </label>
+              <label>
+                Packing List No
+                <select id="tallyPackingListSelect">
+                  <option value="">Chọn Packing List No</option>
+                </select>
+              </label>
+              <button type="button" class="primary-btn" id="printTallyBtn">In</button>
+              <button type="button" class="small-btn danger" id="deleteTallyBtn">Xóa Packing List</button>
+            </div>
+            <div class="field-grid" style="margin-top: 16px;">
+              <label>
+                Packing List No
+                <input id="packingListInfoInput" placeholder="Nhập Packing List No..." />
+              </label>
+              <label>
+                Số Cont / Xe
+                <input id="packingListContXeInput" placeholder="Nhập số cont/xe..." />
+              </label>
+              <label>
+                Labour
+                <input id="packingListLabourInput" placeholder="Nhập labour..." list="labourSuggestions" />
+                <datalist id="labourSuggestions">
+                  <option value="Outsource_PST">
+                  <option value="Outsource_247">
+                  <option value="Insource">
+                </datalist>
+              </label>
+              <label>
+                Ngày nhập hàng
+                <input type="date" id="packingListDateInput" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="primary-btn" id="savePackingListInfoBtn">Lưu thông tin Packing List</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <h2>Export tổng hợp inbound</h2>
+            </div>
+            <div class="tally-controls">
+              <label>
+                Từ ngày
+                <input type="date" id="exportFromDate" />
+              </label>
+              <label>
+                Đến ngày
+                <input type="date" id="exportToDate" />
+              </label>
+              <button type="button" class="primary-btn" id="exportInboundBtn">Export Excel</button>
+            </div>
+          </section>
+        
+          <section class="card">
+            <div class="summary-panel">
+              <h3>Tổng hợp Container/xe chưa vào kho</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Packing list No</th>
+                    <th>Số dòng inbound</th>
+                    <th>Tổng carton</th>
+                    <th>Tổng CBM</th>
+                  </tr>
+                </thead>
+                <tbody id="jobNoSummaryBody">
+                  <tr><td colspan="4">Chưa có dữ liệu</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-header">
+              <h2>Bảng inbound</h2>
+              <button type="button" class="ghost-btn">Xuất Excel</button>
+            </div>
+       
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã phiếu</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Số PO</th>
+                    <th>SKU</th>
+                    <th>SL</th>
+                    <th>CBM</th>
+                    <th>Số Container/xe</th>
+                    <th>Ngày</th>
+                    <th>Outsourced</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+            
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const fallbackRows = [];
+      const fallbackBbrRows = [];
+      let supplierNameMap = {};
+      let fdcByHubDc = {};
+      let cartonPerPalletBySku = {};
+
+      const form = document.getElementById('inboundForm');
+      const tableBody = document.getElementById('tableBody');
+      const resetBtn = document.getElementById('resetBtn');
+      const cancelEditBtn = document.getElementById('cancelEditBtn');
+      const createInboundBtn = document.getElementById('createInboundBtn');
+      const serverStatusEl = document.getElementById('serverStatus');
+      const parentPOInput = form.elements.parentPO;
+      const editStateEl = document.getElementById('editState');
+      const tallyDateInput = document.getElementById('tallyDateInput');
+      const tallyPackingListSelect = document.getElementById('tallyPackingListSelect');
+      const printTallyBtn = document.getElementById('printTallyBtn');
+      const deleteTallyBtn = document.getElementById('deleteTallyBtn');
+      const packingListInfoInput = document.getElementById('packingListInfoInput');
+      const packingListContXeInput = document.getElementById('packingListContXeInput');
+      const packingListLabourInput = document.getElementById('packingListLabourInput');
+      const packingListDateInput = document.getElementById('packingListDateInput');
+      const savePackingListInfoBtn = document.getElementById('savePackingListInfoBtn');
+      const exportFromDateInput = document.getElementById('exportFromDate');
+      const exportToDateInput = document.getElementById('exportToDate');
+      const exportInboundBtn = document.getElementById('exportInboundBtn');
+      let editingInboundId = null;
+
+      async function checkServerStatus() {
+        try {
+          const response = await fetch('http://localhost:3005/api/health');
+          const payload = await response.json();
+          const isOnline = response.ok && payload && payload.ok;
+          serverStatusEl.textContent = isOnline ? 'Kết nối server: online' : 'Kết nối server: offline';
+          serverStatusEl.className = `server-status ${isOnline ? 'connected' : 'disconnected'}`;
+        } catch (error) {
+          serverStatusEl.textContent = 'Kết nối server: offline';
+          serverStatusEl.className = 'server-status disconnected';
+        }
+      }
+      const packingListInput = form.elements.packingListNo;
+      const skuInput = form.elements.sku;
+      const parentPOList = document.getElementById('parentPOList');
+      const packingListList = document.getElementById('packingListList');
+      const skuList = document.getElementById('skuList');
+
+      let bbrReportRows = [...fallbackBbrRows];
+      let rows = [...fallbackRows];
+
+      function normalizeKey(key) {
+        return String(key || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[\s_-]+/g, '')
+          .replace(/[^a-z0-9]/g, '');
+      }
+
+      function getFieldValue(row, keys) {
+        if (!row) return undefined;
+
+        for (const key of keys) {
+          const directKey = Object.prototype.hasOwnProperty.call(row, key) ? key : null;
+          if (directKey) return row[directKey];
+
+          const normalizedTarget = normalizeKey(key);
+          const matchedKey = Object.keys(row).find(actualKey => normalizeKey(actualKey) === normalizedTarget);
+          if (matchedKey) return row[matchedKey];
+        }
+
+        return undefined;
+      }
+
+      function normalizeDate(value) {
+        if (!value) return '';
+        const rawValue = String(value).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) return rawValue;
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return rawValue.slice(0, 10);
+        return formatDateGMT7(date);
+      }
+
+      function formatDateGMT7(value) {
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(date);
+        const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+        return `${values.year}-${values.month}-${values.day}`;
+      }
+
+      function getTodayGMT7() {
+        return formatDateGMT7(new Date());
+      }
+
+      function getCurrentWeekRangeGMT7() {
+        const today = getTodayGMT7();
+        const date = new Date(`${today}T00:00:00Z`);
+        const dayOfWeek = date.getUTCDay();
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        const monday = new Date(date);
+        monday.setUTCDate(date.getUTCDate() + mondayOffset);
+        const sunday = new Date(monday);
+        sunday.setUTCDate(monday.getUTCDate() + 6);
+
+        return {
+          from: monday.toISOString().slice(0, 10),
+          to: sunday.toISOString().slice(0, 10)
+        };
+      }
+
+      function resolveSupplierName(rawSupplier) {
+        const supplierCode = String(rawSupplier || '').trim();
+        if (!supplierCode) return '';
+        return supplierNameMap[supplierCode] || supplierCode;
+      }
+
+      function normalizeInboundRow(row) {
+        const rawSupplier = getFieldValue(row, ['MANCC', 'supplier', 'supplierName', 'vendor']) || 'N/A';
+        const supplierValue = resolveSupplierName(rawSupplier) || rawSupplier || 'N/A';
+        const poValue = getFieldValue(row, ['po', 'ParentPO', 'parentPO', 'PO']) || '';
+        const skuValue = getFieldValue(row, ['sku', 'SKU']) || '';
+        const cartonValue = Number(getFieldValue(row, ['carton', 'qty', 'quantity', 'qty_received']) ?? 0);
+        const receivedValue = Number(getFieldValue(row, ['received', 'receivedQty', 'received_qty']) ?? 0);
+        const itemValue = getFieldValue(row, ['itemName', 'item', 'product', 'description']) || skuValue || 'N/A';
+        const dateValue = normalizeDate(getFieldValue(row, ['datercv', 'receivedDate', 'date', 'createdAt']));
+        const packingListNo = getFieldValue(row, ['PackinglistNo', 'packingListNo', 'packinglistno', 'packing_list_no']) || '';
+        const contXe = getFieldValue(row, ['contxe', 'contXe', 'container', 'cont']) || '';
+        const labour = getFieldValue(row, ['labour', 'labor']) || '';
+        const cbmValue = Number(getFieldValue(row, ['cbm', 'CBM']) ?? 0);
+
+        return {
+          id: String(getFieldValue(row, ['id', 'inboundNo', 'inbound_id']) || `IN-${Date.now()}`),
+          jobno: String(getFieldValue(row, ['jobno', 'jobNo', 'JobNo']) || ''),
+          MANCC: String(rawSupplier),
+          supplier: String(supplierValue),
+          po: String(poValue),
+          parentPO: String(poValue),
+          sku: String(skuValue),
+          carton: Number.isFinite(cartonValue) ? cartonValue : 0,
+          contXe: String(contXe),
+          receivedDate: String(dateValue || getTodayGMT7()),
+          datercv: String(dateValue || getTodayGMT7()),
+          cbm: Number.isFinite(cbmValue) ? cbmValue : 0,
+          labour: String(labour),
+          packingListNo: String(packingListNo),
+          item: String(itemValue),
+          qty: Number.isFinite(cartonValue) ? cartonValue : 0,
+          received: Number.isFinite(receivedValue) ? receivedValue : 0,
+          unit: String(getFieldValue(row, ['unit', 'uom']) || 'cái'),
+          warehouse: String(getFieldValue(row, ['warehouse', 'warehouseName']) || 'WH-A'),
+          status: String(getFieldValue(row, ['status']) || 'Đang nhập'),
+          date: String(dateValue || getTodayGMT7())
+        };
+      }
+
+      function normalizeBbrRow(row) {
+        const parentPO = getFieldValue(row, ['parentpo', 'parentPO', 'ParentPO', 'parent_po', 'Parent PO', 'parent po', 'po', 'PO']) || '';
+        const po = getFieldValue(row, ['po', 'PO', 'purchaseOrder', 'purchaseorder', 'pono', 'PONo', 'poNo']) || parentPO;
+        const hubDc = getFieldValue(row, ['hub_DC', 'hubDC', 'hub_dc', 'Hub_DC', 'hub', 'DC']) || '';
+        const deliveryDate = getFieldValue(row, ['deliveryDate', 'delivery_date', 'deliverydate', 'dateDelivery', 'date_delivery', 'DeliveryDate']) || '';
+        const sku = getFieldValue(row, ['sku', 'SKU', 'item', 'Item', 'product', 'Product', 'itemcode', 'ItemCode']) || '';
+        const rawSupplier = getFieldValue(row, ['MANCC', 'mancc', 'supplierCode', 'suppliercode', 'vendor', 'Supplier']) || '';
+        const supplierName = resolveSupplierName(rawSupplier) || rawSupplier;
+        const cbm = Number(getFieldValue(row, ['cbm', 'CBM']) ?? 0);
+        const carton = Number(getFieldValue(row, ['carton', 'Carton', 'qty', 'Qty', 'quantity', 'Quantity']) ?? 1);
+
+        return {
+          MANCC: String(rawSupplier).trim(),
+          mancc: String(rawSupplier).trim(),
+          po: String(po).trim(),
+          hub_DC: String(hubDc).trim(),
+          hubDC: String(hubDc).trim(),
+          parentPO: String(parentPO).trim(),
+          parentpo: String(parentPO).trim(),
+          deliveryDate: normalizeDate(deliveryDate),
+          sku: String(sku).trim(),
+          supplier: String(supplierName).trim(),
+          cbm: Number.isFinite(cbm) ? cbm : 0,
+          carton: Number.isFinite(carton) ? carton : 1,
+          itemName: String(sku).trim(),
+          item: String(sku).trim()
+        };
+      }
+
+      function getRowPo(item) {
+        return String(item.po || item.PO || item.parentPO || item.parentpo || '').trim();
+      }
+
+      function getRowHubDc(item) {
+        return String(item.hub_DC || item.hubDC || item.hub_dc || item.Hub_DC || item.hub || item.DC || '').trim();
+      }
+
+      function getFdcByHubDc(hubDc) {
+        const key = String(hubDc || '').trim().toLowerCase();
+        return fdcByHubDc[key] || '';
+      }
+
+      function getRowCarton(item) {
+        const value = Number(item.carton ?? item.Carton ?? item.qty ?? item.Qty ?? item.quantity ?? item.Quantity ?? 1);
+        return Number.isFinite(value) ? value : 1;
+      }
+
+      function getSelectedBbrRow() {
+        const selectedParentPO = (parentPOInput.value || '').trim();
+        const selectedSku = (skuInput.value || '').trim();
+
+        if (!selectedParentPO && !selectedSku) return null;
+
+        const matches = bbrReportRows.filter(item => String(item.parentPO || item.parentpo || '').trim().toLowerCase() === selectedParentPO.toLowerCase());
+        if (!matches.length) return null;
+
+        return matches.find(item => String(item.sku || item.item || item.itemName || '').trim().toLowerCase() === selectedSku.toLowerCase()) || matches[0] || null;
+      }
+
+      function updateCbmValue() {
+        const selectedRow = getSelectedBbrRow();
+        const carton = Number(form.elements.carton.value || 0);
+        const cbmPerUnit = selectedRow ? Number(selectedRow.cbm || 0) : 0;
+        const totalCbm = carton * cbmPerUnit;
+        form.elements.cbm.value = Number.isFinite(totalCbm) ? totalCbm.toFixed(4) : '0.0000';
+      }
+
+      async function runDbQuery(sql) {
+        const response = await fetch('http://localhost:3005/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString, sql })
+        });
+
+        const payload = await response.json();
+        if (!payload || !payload.ok) {
+          throw new Error(payload && payload.message ? payload.message : 'Không thể tải dữ liệu từ database.');
+        }
+
+        return Array.isArray(payload.rows) ? payload.rows : [];
+      }
+
+      async function loadDatabaseData() {
+        try {
+          const [inboundRows, bbrRows, supplierRows, dcRows, masterdataRows] = await Promise.all([
+            runDbQuery('SELECT * FROM inbound ORDER BY id DESC'),
+            runDbQuery('SELECT * FROM bbrreport ORDER BY parentpo DESC'),
+            runDbQuery('SELECT MANCC, Name_doc FROM nhacungcap ORDER BY MANCC'),
+            runDbQuery('SELECT * FROM dc'),
+            runDbQuery('SELECT * FROM masterdata')
+          ]);
+
+          supplierNameMap = {};
+          (Array.isArray(supplierRows) ? supplierRows : []).forEach(supplierRow => {
+            const mancc = String(getFieldValue(supplierRow, ['MANCC', 'mancc', 'MaNCC']) || '').trim();
+            const nameDoc = String(getFieldValue(supplierRow, ['Name_doc', 'NameDoc', 'name_doc', 'name']) || '').trim();
+            if (mancc) {
+              supplierNameMap[mancc] = nameDoc || mancc;
+            }
+          });
+
+          fdcByHubDc = {};
+          (Array.isArray(dcRows) ? dcRows : []).forEach(dcRow => {
+            const hubDc = String(getFieldValue(dcRow, ['hub_dc', 'hubDC', 'hub_DC', 'Hub_DC', 'hub']) || '').trim();
+            const fdc = String(getFieldValue(dcRow, ['fdc', 'FDC']) || '').trim();
+            if (hubDc) {
+              fdcByHubDc[hubDc.toLowerCase()] = fdc;
+            }
+          });
+
+          cartonPerPalletBySku = {};
+          (Array.isArray(masterdataRows) ? masterdataRows : []).forEach(masterRow => {
+            const sku = String(getFieldValue(masterRow, ['sku', 'SKU', 'item', 'Item', 'itemcode', 'ItemCode']) || '').trim();
+            const cartonPerPallet = Number(getFieldValue(masterRow, ['cartonperpallet', 'cartonPerPallet', 'CartonPerPallet', 'carton_per_pallet']) ?? 0);
+            if (sku && Number.isFinite(cartonPerPallet) && cartonPerPallet > 0) {
+              cartonPerPalletBySku[sku.toLowerCase()] = cartonPerPallet;
+            }
+          });
+
+          const liveInbound = (Array.isArray(inboundRows) ? inboundRows : [])
+            .map(normalizeInboundRow)
+            .filter(row => row.id || row.po || row.sku || row.item);
+
+          const liveBbr = (Array.isArray(bbrRows) ? bbrRows : [])
+            .map(normalizeBbrRow)
+            .filter(item => item.parentPO || item.sku || item.item);
+
+          rows = liveInbound.length ? liveInbound : [...fallbackRows];
+          bbrReportRows = liveBbr.length ? liveBbr : (liveInbound.length ? liveInbound.map(row => ({
+            parentPO: row.po || '',
+            packingListNo: row.po || '',
+            sku: row.sku || '',
+            supplier: row.supplier || '',
+            itemName: row.item || ''
+          })).filter(item => item.parentPO || item.sku) : [...fallbackBbrRows]);
+
+          renderRows(rows);
+          populateLookups();
+        } catch (error) {
+          console.error('Failed to load database data:', error);
+          rows = [...fallbackRows];
+          bbrReportRows = [...fallbackBbrRows];
+          renderRows(rows);
+          populateLookups();
+        }
+      }
+
+      function populateLookups() {
+        const parentOps = [...new Set(
+          (bbrReportRows || [])
+            .map(item => String(item.parentPO || item.parentpo || item.po || '').trim())
+            .filter(Boolean)
+        )];
+
+        const allParentOps = [...new Set([
+          ...parentOps,
+          ...(Array.isArray(rows) ? rows.map(row => String(row.parentPO || row.po || '').trim()).filter(Boolean) : [])
+        ])]
+          .filter(Boolean)
+          .sort((a, b) => String(a).localeCompare(String(b), 'vi'));
+
+        parentPOList.innerHTML = allParentOps.map(value => `<option value="${value}"></option>`).join('');
+      }
+
+      function renderChildPoDetails() {
+        const selectedParentPO = (parentPOInput.value || '').trim();
+        const selectedSku = (skuInput.value || '').trim();
+        const listEl = document.getElementById('childPoTimeline');
+
+        if (!selectedParentPO && !selectedSku) {
+          listEl.innerHTML = `
+            <li>
+              <span class="dot amber"></span>
+              <div>
+                <strong>Chưa có dữ liệu</strong>
+                <p>Chọn Parent PO và SKU để map với BBRreport.</p>
+              </div>
+            </li>
+          `;
+          return;
+        }
+
+        const matches = bbrReportRows.filter((item) => {
+          const rowParentPO = String(item.parentPO || item.parentpo || item.po || '').trim().toLowerCase();
+          const rowSku = String(item.sku || item.item || item.itemName || '').trim().toLowerCase();
+          const matchesParentPO = !selectedParentPO || rowParentPO === selectedParentPO.toLowerCase();
+          const matchesSku = !selectedSku || rowSku === selectedSku.toLowerCase();
+
+          return matchesParentPO && matchesSku;
+        });
+
+        if (!matches.length) {
+          listEl.innerHTML = `
+            <li>
+              <span class="dot amber"></span>
+              <div>
+                <strong>Không tìm thấy</strong>
+                <p>Không có dữ liệu BBRreport phù hợp với Parent PO / SKU hiện tại.</p>
+              </div>
+            </li>
+          `;
+          return;
+        }
+
+        const totalCarton = matches.reduce((sum, item) => sum + getRowCarton(item), 0);
+        const totalCbm = matches.reduce((sum, item) => sum + Number(item.cbm || 0), 0);
+        const hubSummaries = matches.reduce((summary, item) => {
+          const hubDc = getRowHubDc(item) || 'N/A';
+          if (!summary[hubDc]) {
+            summary[hubDc] = { carton: 0, cbm: 0, fdc: getFdcByHubDc(hubDc) };
+          }
+
+          summary[hubDc].carton += getRowCarton(item);
+          summary[hubDc].cbm += Number(item.cbm || 0);
+          return summary;
+        }, {});
+        const uniqueHubDcs = Object.keys(hubSummaries);
+
+        const summaryHtml = `
+          <li>
+            <span class="dot blue"></span>
+            <div>
+              <strong>Tổng hợp</strong>
+              <p>Số hub_DC: ${uniqueHubDcs.length} • Tổng carton: ${totalCarton} • Tổng CBM: ${Number(totalCbm).toFixed(4)}</p>
+            </div>
+          </li>
+        `;
+
+        const detailHtml = Object.entries(hubSummaries).map(([hubDc, summary]) => `
+            <li>
+              <span class="dot green"></span>
+              <div>
+                <strong>hub_DC: ${hubDc}</strong>
+                <p>FDC: ${summary.fdc || 'Không tìm thấy'} • Số carton: ${summary.carton} • CBM: ${summary.cbm.toFixed(4)}</p>
+              </div>
+            </li>
+          `).join('');
+
+        listEl.innerHTML = summaryHtml + detailHtml;
+      }
+
+      function updateByParentPO() {
+        const selectedParentPO = (parentPOInput.value || '').trim();
+        const matches = bbrReportRows.filter(item => String(item.parentPO || item.parentpo || '').trim().toLowerCase() === selectedParentPO.toLowerCase());
+
+        if (!selectedParentPO || !matches.length) {
+          skuList.innerHTML = '';
+          skuInput.value = '';
+          form.elements.supplier.value = '';
+          form.elements.cbm.value = '0.0000';
+          renderChildPoDetails();
+          return;
+        }
+
+        const skuOptions = [...new Set(
+          matches
+            .map(item => item.sku || item.item || item.itemName || '')
+            .filter(Boolean)
+        )];
+
+        skuList.innerHTML = skuOptions.map(value => `<option value="${value}"></option>`).join('');
+
+        const currentSku = (skuInput.value || '').trim();
+        if (currentSku && skuOptions.includes(currentSku)) {
+          skuInput.value = currentSku;
+        } else {
+          skuInput.value = skuOptions[0] || '';
+        }
+
+        const selectedRow = matches.find(item => String(item.sku || item.item || item.itemName || '').trim() === skuInput.value.trim()) || matches[0];
+        if (selectedRow) {
+          form.elements.supplier.value = selectedRow.supplier || '';
+        }
+
+        updateCbmValue();
+        renderChildPoDetails();
+      }
+
+      function getCurrentPackingSummaryRows() {
+        const packingListNo = (packingListInput.value || '').trim();
+        if (!packingListNo) {
+          return [];
+        }
+
+        const matchingRows = rows.filter(row => {
+          const savedPackingListNo = String(row.packingListNo || row.PackinglistNo || '').trim();
+          return savedPackingListNo.toLowerCase() === packingListNo.toLowerCase();
+        });
+
+        const totalCarton = matchingRows.reduce((sum, row) => sum + Number(row.carton || row.qty || 0), 0);
+        const totalCbm = matchingRows.reduce((sum, row) => sum + Number(row.cbm || 0), 0);
+
+        return [{
+          packingListNo,
+          totalCarton,
+          totalCbm
+        }];
+      }
+
+      function updateInboundDetailsByPackingList() {
+        const packingListNo = (packingListInput.value || '').trim().toLowerCase();
+        if (!packingListNo) return;
+
+        const matchingRows = rows.filter(row => getPackingListNo(row).toLowerCase() === packingListNo);
+        if (!matchingRows.length) return;
+
+        const firstContXe = matchingRows
+          .map(row => String(row.contXe || row.contxe || '').trim())
+          .find(Boolean);
+        const firstLabour = matchingRows
+          .map(row => String(row.labour || row.labor || '').trim())
+          .find(Boolean);
+
+        if (firstContXe) form.elements.contXe.value = firstContXe;
+        if (firstLabour) form.elements.labour.value = firstLabour;
+      }
+
+      function renderPackingSummary() {
+        const summaryRows = getCurrentPackingSummaryRows();
+        const summaryBody = document.getElementById('packingSummaryBody');
+
+        if (!summaryRows.length) {
+          summaryBody.innerHTML = '<tr><td colspan="3">Chưa có dữ liệu</td></tr>';
+          return;
+        }
+
+        summaryBody.innerHTML = summaryRows.map(item => `
+          <tr>
+            <td>${item.packingListNo}</td>
+            <td>${item.totalCarton}</td>
+            <td>${item.totalCbm.toFixed(4)}</td>
+          </tr>
+        `).join('');
+      }
+
+      function getPackingListNo(row) {
+        return String(row.packingListNo || row.PackinglistNo || '').trim();
+      }
+
+      function renderTallyPackingLists() {
+        const selectedDate = tallyDateInput.value;
+        const packingLists = [...new Set(
+          rows
+            .filter(row => !selectedDate || String(row.date || row.datercv || '').slice(0, 10) === selectedDate)
+            .map(getPackingListNo)
+            .filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b, 'vi'));
+
+        tallyPackingListSelect.innerHTML = '<option value="">Chọn Packing List No</option>' +
+          packingLists.map(value => `<option value="${value}">${value}</option>`).join('');
+      }
+
+      function loadPackingListInfoForm() {
+        const packingListNo = (tallyPackingListSelect.value || packingListInfoInput.value || '').trim();
+        if (!packingListNo) return;
+
+        const matchingRows = rows.filter(row => getPackingListNo(row).toLowerCase() === packingListNo.toLowerCase());
+        if (!matchingRows.length) return;
+
+        const firstRow = matchingRows[0];
+        packingListInfoInput.value = packingListNo;
+        packingListContXeInput.value = matchingRows.map(row => row.contXe || row.contxe || '').find(Boolean) || '';
+        packingListLabourInput.value = matchingRows.map(row => row.labour || row.labor || '').find(Boolean) || '';
+        packingListDateInput.value = getInboundDate(firstRow) || getTodayGMT7();
+      }
+
+      async function savePackingListInfo() {
+        const packingListNo = packingListInfoInput.value.trim();
+        const contXe = packingListContXeInput.value.trim();
+        const labour = packingListLabourInput.value.trim();
+        const receivedDate = packingListDateInput.value;
+
+        if (!packingListNo || !receivedDate) {
+          showSaveToast('Vui lòng nhập Packing List No và ngày nhập hàng.');
+          return;
+        }
+
+        const response = await fetch('http://localhost:3005/api/inbound-by-packing-list', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString, packingListNo, contXe, labour, receivedDate })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể cập nhật thông tin Packing List.');
+
+        rows = rows.map(row => getPackingListNo(row).toLowerCase() === packingListNo.toLowerCase()
+          ? { ...row, contXe, contxe: contXe, labour, datercv: receivedDate, receivedDate, date: receivedDate }
+          : row);
+        renderRows(rows);
+        renderPackingSummary();
+        showSaveToast(`Đã cập nhật ${payload.affectedRows || 0} dòng của Packing List ${packingListNo}.`);
+      }
+
+      function getInboundDate(row) {
+        return normalizeDate(row.date || row.datercv || row.receivedDate || '');
+      }
+
+      function exportInboundSummary() {
+        const fromDate = exportFromDateInput.value;
+        const toDate = exportToDateInput.value;
+
+        if (!fromDate || !toDate) {
+          showSaveToast('Vui lòng chọn Từ ngày và Đến ngày.');
+          return;
+        }
+
+        if (fromDate > toDate) {
+          showSaveToast('Từ ngày không được lớn hơn Đến ngày.');
+          return;
+        }
+
+        const dailySummary = rows.reduce((summary, row) => {
+          const date = getInboundDate(row);
+          if (!date || date < fromDate || date > toDate) return summary;
+
+          if (!summary[date]) {
+            summary[date] = { carton: 0, cbm: 0 };
+          }
+
+          summary[date].carton += Number(row.carton || row.qty || 0);
+          summary[date].cbm += Number(row.cbm || 0);
+          return summary;
+        }, {});
+
+        const dates = Object.keys(dailySummary).sort((firstDate, secondDate) => secondDate.localeCompare(firstDate));
+        if (!dates.length) {
+          showSaveToast('Không có dữ liệu trong khoảng ngày đã chọn.');
+          return;
+        }
+
+        const excelRows = dates.map((date, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${date}</td>
+            <td>${dailySummary[date].carton}</td>
+            <td>${dailySummary[date].cbm.toFixed(4)}</td>
+          </tr>
+        `).join('');
+        const totalCarton = dates.reduce((sum, date) => sum + dailySummary[date].carton, 0);
+        const totalCbm = dates.reduce((sum, date) => sum + dailySummary[date].cbm, 0);
+        const workbook = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="UTF-8"><style>table{border-collapse:collapse}th,td{border:1px solid #000;padding:8px;text-align:center}th{background:#dbeafe}.total{font-weight:700}</style></head>
+            <body>
+              <table>
+                <thead><tr><th>Số thứ tự</th><th>Ngày</th><th>Số carton</th><th>Số CBM</th></tr></thead>
+                <tbody>${excelRows}<tr class="total"><td colspan="2">TỔNG CỘNG</td><td>${totalCarton}</td><td>${totalCbm.toFixed(4)}</td></tr></tbody>
+              </table>
+            </body>
+          </html>
+        `;
+        const blob = new Blob([`\ufeff${workbook}`], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `inbound_summary_${fromDate}_${toDate}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        showSaveToast(`Đã export ${dates.length} ngày.`);
+      }
+
+      function getRowForEdit(id) {
+        return rows.find(row => String(row.id) === String(id));
+      }
+
+      function beginEditInbound(id) {
+        const row = getRowForEdit(id);
+        if (!row) return;
+
+        editingInboundId = row.id;
+        packingListInput.value = getPackingListNo(row);
+        parentPOInput.value = row.parentPO || row.po || '';
+        skuInput.value = row.sku || '';
+        form.elements.supplier.value = row.MANCC || row.supplier || '';
+        form.elements.carton.value = row.carton || row.qty || 0;
+        form.elements.cbm.value = Number(row.cbm || 0).toFixed(4);
+        form.elements.contXe.value = row.contXe || row.contxe || '';
+        form.elements.labour.value = row.labour || '';
+        form.elements.receivedDate.value = String(row.receivedDate || row.datercv || row.date || '').slice(0, 10);
+        editStateEl.hidden = false;
+        cancelEditBtn.hidden = false;
+        form.querySelector('button[type="submit"]').textContent = 'Cập nhật phiếu';
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function cancelEdit() {
+        editingInboundId = null;
+        editStateEl.hidden = true;
+        cancelEditBtn.hidden = true;
+        form.querySelector('button[type="submit"]').textContent = 'Lưu phiếu nhập';
+        form.reset();
+        form.elements.receivedDate.value = getTodayGMT7();
+        form.elements.carton.value = '1';
+        form.elements.cbm.value = '';
+        skuList.innerHTML = '';
+      }
+
+      async function deleteInboundById(id) {
+        const row = getRowForEdit(id);
+        if (!row || !window.confirm(`Xóa dòng inbound id ${id}?`)) return;
+
+        if (!Number.isInteger(Number(id))) {
+          rows = rows.filter(item => String(item.id) !== String(id));
+          renderRows(rows);
+          renderTallyPackingLists();
+          return;
+        }
+
+        const response = await fetch(`http://localhost:3005/api/inbound/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể xóa dòng inbound.');
+
+        rows = rows.filter(item => String(item.id) !== String(id));
+        renderRows(rows);
+        renderTallyPackingLists();
+        if (String(editingInboundId) === String(id)) cancelEdit();
+      }
+
+      async function deleteTallyPackingList() {
+        const packingListNo = tallyPackingListSelect.value;
+        if (!packingListNo || !window.confirm(`Xóa toàn bộ dòng có Packing List No ${packingListNo}?`)) return;
+
+        const response = await fetch('http://localhost:3005/api/inbound-by-packing-list', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString, packingListNo })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể xóa theo Packing List No.');
+
+        rows = rows.filter(row => getPackingListNo(row).toLowerCase() !== packingListNo.toLowerCase());
+        renderRows(rows);
+        renderTallyPackingLists();
+        showSaveToast(`Đã xóa Packing List No ${packingListNo}.`);
+      }
+
+      function printTallysheet() {
+        const selectedDate = tallyDateInput.value;
+        const packingListNo = tallyPackingListSelect.value;
+        if (!selectedDate || !packingListNo) {
+          showSaveToast('Vui lòng chọn ngày và Packing List No để in.');
+          return;
+        }
+
+        const printRows = rows.filter(row =>
+          getPackingListNo(row).toLowerCase() === packingListNo.toLowerCase() &&
+          String(row.date || row.datercv || '').slice(0, 10) === selectedDate
+        );
+        const printWindow = window.open('', '_blank', 'width=1000,height=700');
+        if (!printWindow) {
+          showSaveToast('Trình duyệt đã chặn cửa sổ in.');
+          return;
+        }
+
+        const formatPrintDate = value => {
+          const [year, month, day] = String(value || '').slice(0, 10).split('-');
+          return year && month && day ? `${day}/${month}/${year}` : value || '';
+        };
+        const firstRow = printRows[0] || {};
+        const supplier = firstRow.supplier || firstRow.MANCC || '';
+        const contXe = firstRow.contXe || firstRow.contxe || '';
+        const totalCarton = printRows.reduce((sum, row) => sum + Number(row.carton || row.qty || 0), 0);
+        const totalCbm = printRows.reduce((sum, row) => sum + Number(row.cbm || 0), 0);
+        const skuSummaries = Object.values(printRows.reduce((summary, row) => {
+          const sku = String(row.sku || row.item || '').trim() || 'N/A';
+          const skuKey = sku.toLowerCase();
+          if (!summary[skuKey]) {
+            const cartonPerPallet = cartonPerPalletBySku[skuKey] || 0;
+            summary[skuKey] = { sku, carton: 0, cartonPerPallet, palletExpected: 0 };
+          }
+
+          summary[skuKey].carton += Number(row.carton || row.qty || 0);
+          summary[skuKey].palletExpected = summary[skuKey].cartonPerPallet > 0
+            ? Math.ceil(summary[skuKey].carton / summary[skuKey].cartonPerPallet)
+            : 0;
+          return summary;
+        }, {}));
+        const palletColumnCount = 15;
+       
+        const palletColumnHeaders = Array.from(
+          { length: palletColumnCount },
+          (_, index) => `<th class="pallet-cell">${index + 1}</th>`
+        ).join('');
+        const palletCheckRows = skuSummaries.flatMap(summary => {
+          const rowCount = Math.max(1, Math.ceil(summary.palletExpected / palletColumnCount));
+          return Array.from({ length: rowCount }, (_, rowIndex) => {
+            const startPallet = rowIndex * palletColumnCount;
+            return `
+              <tr>
+                <td class="sku-column">${rowIndex === 0 ? summary.sku : ''}</td>
+                <td>${rowIndex === 0 ? summary.carton : ''}</td>
+                <td>${rowIndex === 0 ? (summary.cartonPerPallet || '-') : ''}</td>
+                <td>${rowIndex === 0 ? (summary.palletExpected || '-') : ''}</td>
+                ${Array.from({ length: palletColumnCount }, (_, index) => `<td class="pallet-cell">${startPallet + index < summary.palletExpected ? '' : '-'}</td>`).join('')}
+              </tr>
+            `;
+          });
+        }).join('');
+
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>TallySheet_${packingListNo}</title>
+              <style>
+                @page { size: A4 landscape; margin: 10mm; }
+                * { box-sizing: border-box; }
+                body { margin: 0; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+                .sheet { width: 100%; }
+                .header { display: grid; grid-template-columns: 180px 1fr 180px; align-items: center; border-bottom: 2px solid #111; padding-bottom: 12px; }
+                .logo { width: 118px; height: 58px; display: grid; place-items: center; border: 4px solid #f57920; border-radius: 10px; color: #f57920; font-size: 31px; font-weight: 400; letter-spacing: 3px; }
+                .title { text-align: center; }
+                .title h1 { margin: 0 0 8px; font-family: Georgia, 'Times New Roman', serif; font-size: 25px; }
+                .pl { display: inline-block; border: 1px solid #111; padding: 5px 14px; font-size: 17px; font-weight: 700; }
+                .print-date { align-self: start; padding-top: 12px; text-align: right; }
+                .info { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 30px; margin: 18px 0 14px; font-size: 15px; }
+                .info strong { font-weight: 700; }
+                table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                th, td { border: 1px solid #111; height: 42px; padding: 7px 10px; text-align: center; vertical-align: middle; }
+                th { font-weight: 700; font-size: 14px;white-space:normal !important;overflow: hidden; text-overflow:break-word;text-align: center; vertical-align: middle; }
+                td { font-size: 14px; }
+                th:nth-child(1), td:nth-child(1) { width: 5%; }
+                th:nth-child(2), td:nth-child(2) { width: 20%; }
+                th:nth-child(3), td:nth-child(3) { width: 20%; }
+                th:nth-child(4), td:nth-child(4) { width: 15%; }
+                th:nth-child(5), td:nth-child(5) { width: 16%; }
+                th:nth-child(6), td:nth-child(6) { width: 18%; }
+                th:nth-child(7), td:nth-child(7) { width: 18%; }
+                .sku { font-weight: 700; }
+                .total td { height: 45px; font-weight: 700; }
+                .total-label { text-align: right; }
+                .note { min-height: 36px; }
+                .pallet-section { margin-top: 24px; page-break-inside: avoid; }
+                .pallet-section h2 { margin: 0 0 8px; font-size: 16px; }
+                .pallet-table { width: 100%; font-size: 11px; table-layout: fixed; }
+                .pallet-table th, .pallet-table td { height: 28px; padding: 4px 3px; }
+                .pallet-table .sku-column,
+                .pallet-table col.sku-column { width: 40px; min-width: 40px; max-width: 40px; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+                .pallet-table th:nth-child(3), .pallet-table td:nth-child(3),
+                .pallet-table th:nth-child(4), .pallet-table td:nth-child(4) { width: 5%; white-space: nowrap; padding-left: 5px; padding-right: 5px; }
+                .pallet-table th:nth-child(5), .pallet-table td:nth-child(5) { width: 5%; white-space: nowrap; padding-left: 5px; padding-right: 5px; }
+                .pallet-table .pallet-cell { width: 15px; min-width: 10px; max-width: 10px; padding-left: 2px; padding-right: 2px; }
+                /*=========================
+                  Ghi nhận hàng lỗi
+                =========================*/
+                .abnormal-section {
+                  width: 100%;
+                  margin-top: 24px;
+                  font-family: Arial, sans-serif;
+                  font-weight: 700;
+                  color: #000;
+                  page-break-inside: avoid;
+                }
+                /* Tiêu đề */
+                .abnormal-title {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 8px;
+                }  
+                /* Bảng */
+                .abnormal-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                }  
+                  .abnormal-table th,
+                  .abnormal-table td {
+                    border: 1px solid #000;
+                    padding: 6px;
+                    text-align: center;
+                    vertical-align: middle;
+                  }     
+                /* Header */
+
+                .abnormal-table th {
+                    height: 36px;
+                    font-size: 15px;
+                    font-weight: bold;
+                    white-space: normal;
+                    overflow-wrap: break-word;
+                }
+
+                /* Các dòng trống */
+
+                .abnormal-table td {
+                    height: 38px;
+                }
+
+                /* Chiều rộng 3 cột */
+
+                .abnormal-table th:nth-child(1),
+                .abnormal-table td:nth-child(1) {
+                    width: 25%;
+                }
+
+                .abnormal-table th:nth-child(2),
+                .abnormal-table td:nth-child(2) {
+                    width: 55%;
+                }
+
+                .abnormal-table th:nth-child(3),
+                .abnormal-table td:nth-child(3) {
+                    width: 20%;
+                }
+
+                /* Ghi chú */
+
+                .abnormal-note {
+                    margin-top: 18px;
+                    font-size: 13px;
+                    font-style: italic;
+                    line-height: 1.5;
+                }
+
+                /* ==============================
+                  PHẦN KÝ TÊN
+                  ============================== */
+
+                .signature-section {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    column-gap: 40px;
+
+                    margin-top: 40px;
+                }
+
+                .signature-box {
+                    text-align: left;
+                    min-height: 150px;
+                }
+
+                .signature-title {
+                    font-size: 18px;
+                    font-weight: bold;
+                }
+
+                .signature-space {
+                    height: 105px;
+                }
+
+                .signature-line {
+                    font-size: 16px;
+                    text-align: center;
+                }
+              </style>
+            </head>
+            <body>
+              <main class="sheet">
+                <header class="header">
+                  <div class="logo">KLN</div>
+                  <div class="title">
+                    <h1>PHIẾU NHẬP HÀNG / TALLY SHEET</h1>
+                    <div class="pl">PL No: ${packingListNo}</div>
+                  </div>
+                  <div class="print-date">Ngày in: ${formatPrintDate(getTodayGMT7())}</div>
+                </header>
+                <section class="info">
+                  <div><strong>Nhà Cung Cấp:</strong> ${supplier}</div>
+                  <div><strong>Ngày Nhập:</strong> ${formatPrintDate(selectedDate)}</div>
+                  <div><strong>Số Cont/Xe:</strong> ${contXe}</div>
+                  <div><strong>Giờ Bắt Đầu:</strong> ............ <strong>Kết Thúc:</strong> ...........</div>
+                </section>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>STT</th>
+                      <th>Parent PO</th>
+                      <th>SKU</th>
+                      <th>Số Kiện (Kế hoạch)</th>
+                      <th>Thực Nhận</th>
+                      <th>Vị trí</th>
+                      <th>Ghi chú</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${printRows.map((row, index) => `
+                      <tr>
+                        <td>${index + 1}</td>
+                        <td>${row.parentPO || row.po || ''}</td>
+                        <td class="sku">${row.sku || row.item || ''}</td>
+                        <td>${Number(row.carton || row.qty || 0)}</td>
+                        <td style="height:25px;"></td>
+                        <td style="height:25px;"></td>
+                        <td style="height:25px;"></td>
+                      </tr>
+                    `).join('')}
+                    <tr class="total">
+                      <td colspan="3" class="total-label">TỔNG CỘNG:</td>
+                      <td>${totalCarton}</td>
+                      <td></td>
+                      <td>CBM: ${totalCbm.toFixed(3)}</td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <section class="pallet-section">
+                  <h2>CHI TIẾT KIỂM ĐẾM PALLET</h2>
+                  <table class="pallet-table">
+                    <colgroup>
+                      <col class="sku-column">
+                      <col class="carton-column">
+                      <col class="carton-per-pallet-column">
+                      <col class="expected-pallet-column">
+                      ${Array.from({ length: palletColumnCount }, () => '<col class="pallet-cell">').join('')}
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th rowspan="2" class="sku-column">SKU</th>
+                        <th rowspan="2">Số carton</th>
+                        <th rowspan="2">Carton/Pallet</th>
+                        <th rowspan="2">Pallet dự kiến</th>
+                        <th colspan="${palletColumnCount}">Chi tiết pallet kiểm</th>
+                      </tr>
+                      <tr>
+                        ${palletColumnHeaders}
+                      </tr>
+                    </thead>
+                    <tbody>${palletCheckRows || `<tr><td colspan="${4 + palletColumnCount}">Chưa có dữ liệu masterdata theo SKU</td></tr>`}</tbody>
+                  </table>
+                  <!-- GHI NHẬN HÀNG LỖI / BẤT THƯỜNG -->
+                  <div class="abnormal-section">
+                    <div class="abnormal-title">
+                      <h2>GHI NHẬN HÀNG LỖI / BẤT THƯỜNG</h2>
+                    </div>
+
+                    <table class="abnormal-table">
+                      <thead>
+                        <tr>
+                          <th>SKU</th>
+                          <th>Lý do (Rách, móp, bể, ướt, dư, thiếu...)</th>
+                          <th>Số thùng</th>
+                         
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div class="abnormal-note">
+                       * Lưu ý: Khi nhập hàng phát hiện mối, kiến, côn trùng lập tức báo trưởng nhóm.
+                         Hàng không quay theo chiều mũi tên phải chụp hình.
+                    </div>
+                      <!-- Ký tên -->
+                        <div class="signature-section">
+                           <div class="signature-box">
+                             <div class="signature-title">
+                               Người Giao Hàng
+                             </div>
+                             <div class="signature-space"></div>
+                             <div class="signature-line">
+                              ................................
+                             </div> 
+                             </div>
+                             <div class="signature-box">
+                               <div class="signature-title">
+                                 Người Nhận Hàng
+                               </div>
+                               <div class="signature-space"></div>
+                               <div class="signature-line">
+                                ................................
+                               </div> 
+                             </div>
+                        </div>
+                  </div>
+              </main>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      }
+
+      function showSaveToast(message) {
+        const toast = document.getElementById('saveToast');
+        toast.textContent = message;
+        toast.hidden = false;
+        clearTimeout(showSaveToast.timeoutId);
+        showSaveToast.timeoutId = setTimeout(() => {
+          toast.hidden = true;
+        }, 2500);
+      }
+
+      function updateCurrentDayKpis(rowsToRender) {
+        const today = getTodayGMT7();
+        const todayRows = rowsToRender.filter(row => getInboundDate(row) === today);
+        const packingListCount = new Set(todayRows.map(getPackingListNo).filter(Boolean)).size;
+        const cartonTotal = todayRows.reduce((sum, row) => sum + Number(row.carton || row.qty || 0), 0);
+        const cbmTotal = todayRows.reduce((sum, row) => sum + Number(row.cbm || 0), 0);
+
+        document.getElementById('totalCount').textContent = packingListCount;
+        document.getElementById('inProgressCount').textContent = cartonTotal;
+        document.getElementById('doneCount').textContent = cbmTotal.toFixed(4);
+
+        const week = getCurrentWeekRangeGMT7();
+        const weeklyActualCbm = rowsToRender
+          .filter(row => {
+            const date = getInboundDate(row);
+            return date >= week.from && date <= week.to;
+          })
+          .reduce((sum, row) => sum + Number(row.cbm || 0), 0);
+        const weeklyForecastCbm = bbrReportRows
+          .filter(row => {
+            const deliveryDate = normalizeDate(row.deliveryDate || '');
+            return deliveryDate && deliveryDate >= week.from && deliveryDate <= week.to;
+          })
+          .reduce((sum, row) => sum + (Number(row.carton || 0) * Number(row.cbm || 0)), 0);
+        const weeklyForecastPercent = weeklyForecastCbm > 0
+          ? (weeklyActualCbm / weeklyForecastCbm) * 100
+          : 0;
+
+        document.getElementById('weeklyForecastPercent').textContent = `${weeklyForecastPercent.toFixed(2)}%`;
+        document.getElementById('weeklyForecastDetail').textContent = `Thực tế: ${weeklyActualCbm.toFixed(4)} / Forecast: ${weeklyForecastCbm.toFixed(4)} CBM`;
+      }
+
+      function renderRows(rowsToRender) {
+        tableBody.innerHTML = rowsToRender.map(row => `
+          <tr>
+            <td>${row.packingListNo || ''}</td>
+            <td>${row.supplier || row.MANCC || ''}</td>
+            <td>${row.po || row.parentPO || ''}</td>
+            <td>${row.sku || ''}</td>
+            <td>${row.qty || row.carton || 0}</td>
+            <td>${Number(row.cbm || 0).toFixed(4)}</td>
+            <td style="width: 120px;max-width: 120px;overflow: hidden;text-overflow: ellipsis;white-space: normal;">${row.contXe||''}</td>
+            <td>${row.date || row.datercv || getTodayGMT7()}</td>
+            <td>${row.labour||''}</td>
+            
+            <td>
+              <div class="row-actions">
+                <button type="button" class="small-btn" data-action="edit" data-id="${row.id}">Sửa</button>
+                <button type="button" class="small-btn danger" data-action="delete" data-id="${row.id}">Xóa</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+
+        renderJobNoSummary(rowsToRender);
+        updateCurrentDayKpis(rowsToRender);
+        renderTallyPackingLists();
+      }
+
+      function renderJobNoSummary(rowsToRender) {
+        const summaryBody = document.getElementById('jobNoSummaryBody');
+        const groupedRows = new Map();
+
+        rowsToRender
+          .filter(row => String(row.labour || row.labor || '').trim().length === 0)
+          .forEach(row => {
+            const packingListNo = String(row.packingListNo || '').trim() || 'Không có Packing List No';
+            const summary = groupedRows.get(packingListNo) || { count: 0, carton: 0, cbm: 0 };
+            summary.count += 1;
+            summary.carton += Number(row.carton || row.qty || 0);
+            summary.cbm += Number(row.cbm || 0);
+            groupedRows.set(packingListNo, summary);
+          });
+
+        summaryBody.innerHTML = groupedRows.size
+          ? [...groupedRows.entries()].map(([packingListNo, summary]) => `
+              <tr>
+                <td>${packingListNo}</td>
+                <td>${summary.count}</td>
+                <td>${summary.carton}</td>
+                <td>${summary.cbm.toFixed(4)}</td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="4">Không có inbound nào có Labour trống</td></tr>';
+      }
+
+      renderRows(rows);
+      populateLookups();
+      form.elements.receivedDate.value = getTodayGMT7();
+      tallyDateInput.value = form.elements.receivedDate.value;
+      exportFromDateInput.value = getTodayGMT7();
+      exportToDateInput.value = getTodayGMT7();
+      packingListDateInput.value = getTodayGMT7();
+      renderPackingSummary();
+      checkServerStatus();
+      loadDatabaseData();
+      packingListContXeInput.addEventListener('input', function () {
+         this.value = this.value.toUpperCase();
+      });
+      packingListInput.addEventListener('input', function () {
+        renderPackingSummary();
+        updateInboundDetailsByPackingList();
+      });
+      packingListInput.addEventListener('change', updateInboundDetailsByPackingList);
+      form.elements.receivedDate.addEventListener('change', function () {
+        tallyDateInput.value = form.elements.receivedDate.value;
+        renderTallyPackingLists();
+      });
+      tallyDateInput.addEventListener('change', renderTallyPackingLists);
+      tallyPackingListSelect.addEventListener('change', loadPackingListInfoForm);
+      savePackingListInfoBtn.addEventListener('click', async function () {
+        try {
+          await savePackingListInfo();
+        } catch (error) {
+          showSaveToast(error.message || 'Không thể cập nhật thông tin Packing List.');
+        }
+      });
+      printTallyBtn.addEventListener('click', printTallysheet);
+      exportInboundBtn.addEventListener('click', exportInboundSummary);
+      deleteTallyBtn.addEventListener('click', async function () {
+        try {
+          await deleteTallyPackingList();
+        } catch (error) {
+          showSaveToast(error.message || 'Không thể xóa Packing List No.');
+        }
+      });
+      cancelEditBtn.addEventListener('click', cancelEdit);
+      tableBody.addEventListener('click', async function (event) {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+
+        try {
+          if (button.dataset.action === 'edit') {
+            beginEditInbound(button.dataset.id);
+          } else if (button.dataset.action === 'delete') {
+            await deleteInboundById(button.dataset.id);
+          }
+        } catch (error) {
+          showSaveToast(error.message || 'Không thể xử lý dòng inbound.');
+        }
+      });
+      parentPOInput.addEventListener('change', updateByParentPO);
+      parentPOInput.addEventListener('input', updateByParentPO);
+      skuInput.addEventListener('change', function () {
+        updateCbmValue();
+        renderChildPoDetails();
+      });
+      skuInput.addEventListener('input', function () {
+        updateCbmValue();
+        renderChildPoDetails();
+      });
+      form.elements.carton.addEventListener('input', function () {
+        updateCbmValue();
+        renderPackingSummary();
+      });
+      form.elements.carton.addEventListener('change', function () {
+        updateCbmValue();
+        renderPackingSummary();
+      });
+      createInboundBtn.addEventListener('click', function () {
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        form.elements.parentPO.focus();
+      });
+
+      function preserveFormValues() {
+        const keepValues = {
+          packingListNo: packingListInput.value,
+          parentPO: parentPOInput.value,
+          sku: skuInput.value,
+          supplier: form.elements.supplier.value,
+          carton: form.elements.carton.value,
+          cbm: form.elements.cbm.value,
+          contXe: form.elements.contXe.value,
+          labour: form.elements.labour.value,
+          receivedDate: form.elements.receivedDate.value
+        };
+
+        form.reset();
+
+        if (keepValues.packingListNo) packingListInput.value = keepValues.packingListNo;
+        if (keepValues.parentPO) parentPOInput.value = keepValues.parentPO;
+        if (keepValues.sku) skuInput.value = keepValues.sku;
+        if (keepValues.supplier) form.elements.supplier.value = keepValues.supplier;
+        if (keepValues.carton) form.elements.carton.value = keepValues.carton;
+        if (keepValues.cbm) form.elements.cbm.value = keepValues.cbm;
+        if (keepValues.contXe) form.elements.contXe.value = keepValues.contXe;
+        if (keepValues.labour) form.elements.labour.value = keepValues.labour;
+        if (keepValues.receivedDate) form.elements.receivedDate.value = keepValues.receivedDate;
+
+        updateCbmValue();
+      }
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const selectedRow = getSelectedBbrRow();
+        const cartonQty = Number(formData.get('carton')) || 0;
+        const totalCbm = selectedRow ? Number(selectedRow.cbm || 0) * cartonQty : Number(formData.get('cbm')) || 0;
+        const packingListNo = String(formData.get('packingListNo') || '').trim();
+        const selectedMancc = String(selectedRow && (selectedRow.MANCC || selectedRow.mancc || selectedRow.supplierCode || '') || '').trim();
+
+        const newRow = {
+          MANCC: selectedMancc || String(formData.get('supplier') || '').trim(),
+          supplier: formData.get('supplier') || '',
+          po: formData.get('parentPO') || '',
+          parentPO: formData.get('parentPO') || '',
+          item: formData.get('sku') || '',
+          sku: formData.get('sku') || '',
+          carton: cartonQty,
+          contXe: formData.get('contXe') || '',
+          contxe: formData.get('contXe') || '',
+          datercv: formData.get('receivedDate') || getTodayGMT7(),
+          receivedDate: formData.get('receivedDate') || getTodayGMT7(),
+          cbm: totalCbm,
+          labour: formData.get('labour') || '',
+          packingListNo: packingListNo,
+          PackinglistNo: packingListNo,
+          qty: cartonQty,
+          received: cartonQty,
+          unit: 'carton',
+          warehouse: 'WH-A',
+          status: 'Đang nhập',
+          date: formData.get('receivedDate') || getTodayGMT7()
+        };
+
+        try {
+          const isEditing = editingInboundId !== null;
+          const response = await fetch(isEditing
+            ? `http://localhost:3005/api/update-inbound/${encodeURIComponent(editingInboundId)}`
+            : 'http://localhost:3005/api/insert-inbound', {
+            method: isEditing ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString, row: newRow })
+          });
+
+          const payload = await response.json();
+          if (!response.ok || !payload || !payload.ok) {
+            throw new Error(payload && payload.message ? payload.message : 'Không thể lưu dữ liệu vào database.');
+          }
+
+          if (isEditing) {
+            rows = rows.map(row => String(row.id) === String(editingInboundId)
+              ? normalizeInboundRow({ ...row, ...newRow, id: editingInboundId })
+              : row);
+          } else {
+            rows = [
+              {
+                ...newRow,
+                id: payload.insertId || `LOCAL-${Date.now()}`
+              },
+              ...rows
+            ];
+          }
+          renderRows(rows);
+          renderPackingSummary();
+          if (isEditing) {
+            cancelEdit();
+          } else {
+            preserveFormValues();
+          }
+
+          if (selectedRow && totalCbm) {
+            form.elements.cbm.value = totalCbm.toFixed(4);
+          }
+
+          const summaryLabel = packingListNo || 'phiếu hiện tại';
+          showSaveToast(`${isEditing ? 'Đã cập nhật' : 'Đã lưu thành công'} cho ${summaryLabel}.`);
+        } catch (error) {
+          console.error('Insert inbound failed:', error);
+          showSaveToast(error.message || 'Lưu dữ liệu không thành công.');
+        }
+      });
+
+      resetBtn.addEventListener('click', function () {
+        cancelEdit();
+      });
+    </script>
+  </body>
+</html>

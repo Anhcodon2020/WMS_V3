@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Allocation Dashboard</title>
+    <style>
+      :root { --bg:#eef5ff; --panel:#fff; --border:#dfe7f5; --text:#14213d; --muted:#5b6b8a; --primary:#2563eb; --accent:#0f766e; --danger:#b91c1c; } * { box-sizing:border-box; } body { margin:0; color:var(--text); font-family:Inter,'Segoe UI',Arial,sans-serif; background:linear-gradient(180deg,var(--bg),#f8fafc); }.page { max-width:1500px; margin:auto; padding:30px 24px 40px; }.topbar,.card-header,.filters { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; } h1,h2,p { margin:0; } h1 { font-size:2rem; } h2 { font-size:1.15rem; }.muted { color:var(--muted); }.card { margin-top:20px; padding:20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); box-shadow:0 10px 30px #0f172a14; } button { border:0; border-radius:9px; padding:10px 14px; cursor:pointer; font-weight:700; }.ghost { color:var(--text); background:#edf2ff; } input,select { min-width:190px; padding:10px 11px; border:1px solid var(--border); border-radius:9px; color:var(--text); background:#f8fafc; }.kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:16px; }.kpi { padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:#f8fafc; }.kpi .value { margin-top:4px; font-size:1.5rem; font-weight:800; }.table-wrap { overflow:auto; margin-top:16px; } table { width:100%; min-width:1500px; border-collapse:collapse; } th,td { padding:11px 9px; text-align:left; border-bottom:1px solid #edf2f7; white-space:nowrap; } th { color:var(--muted); background:#f8fafc; font-size:.78rem; text-transform:uppercase; position:sticky; top:0; }.overdue td { color:#991b1b; background:#fef2f2; }.status { padding:7px 10px; border-radius:8px; color:#065f46; background:#ecfdf5; font-weight:700; }.notice { margin-top:14px; padding:10px 12px; border-radius:9px; color:var(--danger); background:#fef2f2; }
+      @media (max-width:900px) { .page { padding:20px 14px; }.kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } } @media (max-width:560px) { .kpi-grid { grid-template-columns:1fr; } input,select { width:100%; } }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar"><div><p class="muted">Warehouse Management System</p><h1>Allocation Dashboard</h1></div><button class="ghost" id="refreshBtn" type="button">Làm mới</button></header>
+      <section class="card"><div class="card-header"><h2>Tổng hợp release</h2><span class="status" id="recordStatus">Đang tải</span></div><div class="kpi-grid"><article class="kpi"><div class="muted">Tổng dòng release</div><div class="value" id="totalRows">0</div></article><article class="kpi"><div class="muted">Số Release Key</div><div class="value" id="totalKeys">0</div></article><article class="kpi"><div class="muted">Tổng Release Qty</div><div class="value" id="totalQty">0</div></article><article class="kpi"><div class="muted">Đã map Hub DC</div><div class="value" id="mappedHubdc">0</div></article></div><div class="table-wrap"><table><thead><tr><th>Hub DC</th><th>Tổng CBM Release</th></tr></thead><tbody id="hubdcSummaryBody"><tr><td colspan="2" class="muted">Đang tải dữ liệu...</td></tr></tbody></table></div></section>
+      <section class="card"><div class="card-header"><h2>Chi tiết allocation</h2><span class="muted" id="visibleCount">0 dòng hiển thị</span><span class="status" id="selectedStatus">Đã chọn: 0 dòng | Qty: 0</span><div class="action-buttons"><button class="ghost" id="selectAllBtn" type="button">Chọn hết</button><button id="pickingBtn" type="button">Picking</button></div></div><div class="filters" style="justify-content:flex-start;margin-top:16px"><input id="searchReleaseKey" type="search" placeholder="Tìm Release Key"><input id="searchChildPo" type="search" placeholder="Tìm Child PO"><input id="searchSku" type="search" placeholder="Tìm SKU"><select id="hubdcFilter"><option value="">Tất cả Hub DC</option></select></div><div id="notice" class="notice" hidden></div><div class="table-wrap"><table><thead><tr><th>Chọn</th><th>Release Key</th><th>SKU</th><th>Release Qty</th><th>Child PO</th><th>Parent PO</th><th>Hub DC</th><th>FDC</th><th>Qty Inventory</th><th>Ngày nhận</th><th>Due Date</th><th>Release CBM</th><th>Qty còn lại</th></tr></thead><tbody id="allocationBody"><tr><td colspan="13" class="muted">Đang tải dữ liệu...</td></tr></tbody></table></div></section>
+    </main>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005'; const $ = id => document.getElementById(id); let rows = []; const selectedRows = new Set();
+      function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }
+      function dateOnly(value) { return value ? String(value).slice(0, 10) : ''; }
+      function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
+      function showError(message) { $('notice').hidden = false; $('notice').textContent = message; }
+      function getFilteredRows() {
+        const releaseKey = $('searchReleaseKey').value.trim().toLowerCase();
+        const childPo = $('searchChildPo').value.trim().toLowerCase();
+        const sku = $('searchSku').value.trim().toLowerCase();
+        const hubdc = $('hubdcFilter').value;
+        return rows.filter(row =>
+          (!releaseKey || String(row.release_key || '').toLowerCase().includes(releaseKey)) &&
+          (!childPo || String(row.child_po || '').toLowerCase().includes(childPo)) &&
+          (!sku || String(row.sku || '').toLowerCase().includes(sku)) &&
+          (!hubdc || String(row.hubdc || '') === hubdc)
+        );
+      }
+      function updateSelectAllButton() {
+        const filtered = getFilteredRows();
+        const allSelected = filtered.length > 0 && filtered.every(row => selectedRows.has(rows.indexOf(row)));
+        $('selectAllBtn').textContent = allSelected ? 'Bỏ chọn hết' : 'Chọn hết';
+      }
+      function toggleAllVisibleRows() {
+        const filtered = getFilteredRows();
+        const allSelected = filtered.length > 0 && filtered.every(row => selectedRows.has(rows.indexOf(row)));
+        filtered.forEach(row => {
+          const index = rows.indexOf(row);
+          if (allSelected) selectedRows.delete(index); else selectedRows.add(index);
+        });
+        renderRows();
+        updateSelectedStatus();
+      }
+      async function createPicking() {
+        const selected = [...selectedRows].map(index => rows[index]).filter(Boolean);
+        if (!selected.length) return showError('Vui lòng chọn ít nhất một dòng để tạo Picking.');
+        $('pickingBtn').disabled = true;
+        try {
+          const response = await fetch(`${api}/api/allowcate/picking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString, rows: selected })
+          });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tạo Picking List.');
+          $('notice').hidden = false;
+          $('notice').textContent = `Đã tạo Picking ${payload.pickingNo}: ${payload.inserted} dòng.`;
+          selectedRows.clear();
+          updateSelectedStatus();
+          renderRows();
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          $('pickingBtn').disabled = false;
+        }
+      }
+      function updateSelectedStatus() {
+        const selected = rows.filter((row, index) => selectedRows.has(index));
+        const remainingQty = selected.reduce((total, row) => total + number(row.qty_inventory) - number(row.release_qty), 0);
+        $('selectedStatus').textContent = `Đã chọn: ${selected.length.toLocaleString('vi-VN')} dòng | Qty: ${remainingQty.toLocaleString('vi-VN')}`;
+      }
+      function toggleRow(rowIndex, checked) {
+        const row = rows[rowIndex];
+        if (!row) return;
+        if (checked) selectedRows.add(rowIndex); else selectedRows.delete(rowIndex);
+        renderRows();
+        updateSelectedStatus();
+      }
+      
+      function renderRows() {
+        const filtered = getFilteredRows();
+        $('visibleCount').textContent = `${filtered.length.toLocaleString('vi-VN')} dòng hiển thị`;
+        $('allocationBody').innerHTML = filtered.map(row => {
+          const sourceIndex = rows.indexOf(row);
+          const selected = selectedRows.has(sourceIndex);
+          const remainingQty = number(row.qty_inventory) - number(row.release_qty);
+          return `
+          <tr class="${number(row.due_date) > 14 ? 'overdue' : ''}">
+            <td><input type="checkbox" aria-label="Chọn ${escapeHtml(row.release_key)}" data-row-index="${sourceIndex}" ${selected ? 'checked' : ''}></td>
+            <td>${escapeHtml(row.release_key)}</td>
+            <td>${escapeHtml(row.sku)}</td>
+            <td>${number(row.release_qty).toLocaleString('vi-VN')}</td>
+            <td>${escapeHtml(row.child_po)}</td>
+            <td>${escapeHtml(row.parentpo)}</td>
+            <td>${escapeHtml(row.hubdc)}</td>
+            <td>${escapeHtml(row.fdc)}</td>
+            <td>${number(row.qty_inventory).toLocaleString('vi-VN')}</td>
+            <td>${escapeHtml(dateOnly(row.date_rcv))}</td>
+            <td>${number(row.due_date).toLocaleString('vi-VN')}</td>
+            <td>${number(row.release_cbm).toFixed(3)}</td>
+            <td>${selected ? remainingQty.toLocaleString('vi-VN') : ''}</td>
+          </tr>
+        `;
+        }).join('') || '<tr><td colspan="13" class="muted">Không tìm thấy dữ liệu phù hợp.</td></tr>';
+        updateSelectAllButton();
+      }
+
+      function renderHubdcSummary() {
+        const summary = rows.reduce((result, row) => {
+          const hubdc = String(row.hubdc || '').trim() || 'Chưa map';
+          result[hubdc] = (result[hubdc] || 0) + number(row.release_cbm);
+          return result;
+        }, {});
+        const entries = Object.entries(summary).sort(([left], [right]) => left.localeCompare(right));
+        $('hubdcSummaryBody').innerHTML = entries.map(([hubdc, cbm]) => `<tr><td>${escapeHtml(hubdc)}</td><td>${cbm.toFixed(3)}</td></tr>`).join('') || '<tr><td colspan="2" class="muted">Không có dữ liệu.</td></tr>';
+      }
+      
+      async function loadDashboard() { 
+        $('notice').hidden = true; 
+        const response = await fetch(`${api}/api/allowcate/dashboard?connectionString=${encodeURIComponent(connectionString)}`); 
+        const payload = await response.json(); 
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải dashboard allocation.'); 
+        rows = payload.rows || []; 
+        selectedRows.clear();
+        updateSelectedStatus();
+        const summary = payload.summary || {}; 
+        $('totalRows').textContent = number(summary.totalRows).toLocaleString('vi-VN'); 
+        $('totalKeys').textContent = number(summary.totalReleaseKeys).toLocaleString('vi-VN'); 
+        $('totalQty').textContent = number(summary.totalReleaseQty).toLocaleString('vi-VN'); 
+        $('mappedHubdc').textContent = rows.filter(row => String(row.hubdc || '').trim()).length.toLocaleString('vi-VN'); 
+        $('recordStatus').textContent = `${rows.length.toLocaleString('vi-VN')} dòng tải về`; 
+        const hubdcs = [...new Set(rows.map(row => String(row.hubdc || '').trim()).filter(Boolean))].sort(); 
+        $('hubdcFilter').innerHTML = '<option value="">Tất cả Hub DC</option>' + hubdcs.map(hubdc => `<option value="${escapeHtml(hubdc)}">${escapeHtml(hubdc)}</option>`).join(''); 
+        renderHubdcSummary();
+        renderRows(); 
+      }
+      ['searchReleaseKey','searchChildPo','searchSku','hubdcFilter'].forEach(id => $(id).addEventListener(id === 'hubdcFilter' ? 'change' : 'input', renderRows)); $('allocationBody').addEventListener('change', event => { if (event.target.matches('input[data-row-index]')) toggleRow(Number(event.target.dataset.rowIndex), event.target.checked); }); $('selectAllBtn').addEventListener('click', toggleAllVisibleRows); $('pickingBtn').addEventListener('click', createPicking); $('refreshBtn').addEventListener('click', () => loadDashboard().catch(error => showError(error.message))); loadDashboard().catch(error => showError(error.message));
+    </script>
+  </body>
+</html>

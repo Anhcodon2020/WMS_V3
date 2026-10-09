@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transaction | WMS</title>
+  <style>
+    :root { --ink:#14213d; --muted:#64748b; --line:#dfe7f5; --bg:#f3f6fb; --panel:#fff; --blue:#2563eb; --blue-soft:#eff6ff; --green:#059669; --shadow:0 10px 30px rgba(15,23,42,.08); }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:linear-gradient(180deg,#edf4ff 0%,#f8fafc 55%); font:14px/1.5 Inter,"Segoe UI",Arial,sans-serif; }
+    button,input { font:inherit; }
+    .shell { display:flex; min-height:100vh; }
+    aside { width:240px; flex:none; padding:22px 16px; color:#e2e8f0; background:linear-gradient(180deg,#101c38,#16284a); }
+    .brand { display:flex; align-items:center; gap:12px; padding:8px 10px 18px; border-bottom:1px solid #ffffff2e; font-weight:700; }
+    .brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; color:#fff; background:#2563eb; }
+    nav { display:grid; gap:8px; margin-top:18px; }
+    nav a { padding:11px 12px; border-radius:12px; color:#dfeafc; text-decoration:none; font-weight:600; }
+    nav a:hover, nav a.active { color:#fff; background:#60a5fa2e; }
+    main { flex:1; min-width:0; padding:30px 24px 40px; }
+    .page { max-width:1500px; margin:auto; }
+    .topbar,.section-head { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    h1,h2,p { margin:0; } h1 { font-size:2rem; } h2 { font-size:1.15rem; } .muted { color:var(--muted); }
+    .card { margin-top:20px; padding:20px; border:1px solid var(--line); border-radius:16px; background:var(--panel); box-shadow:var(--shadow); }
+    .filters { display:grid; grid-template-columns:minmax(220px,1fr) minmax(220px,1fr) auto; gap:14px; margin-top:18px; align-items:end; }
+    label { display:grid; gap:7px; color:var(--muted); font-size:12px; font-weight:700; }
+    input { width:100%; padding:10px 11px; border:1px solid #cbd5e1; border-radius:9px; color:var(--ink); background:#f8fafc; outline:0; }
+    input:focus { border-color:var(--blue); box-shadow:0 0 0 3px #dbeafe; }
+    button { border:0; border-radius:9px; padding:10px 14px; cursor:pointer; font-weight:700; }
+    .primary { color:#fff; background:var(--blue); } .ghost { color:var(--ink); background:#edf2ff; }
+    .danger { color:#fff; background:#b91c1c; }
+    .notice { margin-top:14px; padding:10px 12px; border-radius:9px; background:#ecfdf5; color:#065f46; }
+    .table-wrap { overflow:auto; margin-top:16px; border:1px solid var(--line); border-radius:10px; }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th,td { padding:11px 12px; text-align:left; border-bottom:1px solid #edf2f7; white-space:nowrap; }
+    th { color:var(--muted); background:#f8fafc; font-size:12px; text-transform:uppercase; }
+    tbody tr:last-child td { border-bottom:0; }
+    tbody tr.selectable { cursor:pointer; } tbody tr.selectable:hover, tbody tr.selected { background:var(--blue-soft); }
+    .sku-button { padding:0; color:var(--blue); background:transparent; text-align:left; font-weight:800; }
+    .sku-button:hover { text-decoration:underline; }
+    .number { text-align:right; font-variant-numeric:tabular-nums; }
+    .totals { display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:13px; font-weight:700; }
+    .totals b { font-size:1.1rem; } .totals .exported { color:var(--green); } .totals .remaining { color:#b45309; }
+    .empty { padding:24px; color:var(--muted); text-align:center; }
+    .detail-title { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+    @media (max-width:900px) { aside { display:none; } main { padding:20px 14px 30px; } }
+    @media (max-width:620px) { .filters { grid-template-columns:1fr; } .card { padding:15px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div>
+      <nav aria-label="Main navigation">
+        <a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a>
+        <a href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a>
+        <a href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a>
+        <a href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a>
+        <a href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a>
+        <a class="active" href="transaction.html">🔁 Transaction</a>
+        <a href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 BBR Report</a>
+        <a href="pallet.html" target="_blank" rel="noopener noreferrer">📦 Pallet</a>
+      </nav>
+    </aside>
+    <main>
+      <div class="page">
+        <header class="topbar">
+          <div><p class="muted">Warehouse Management System</p><h1>Transaction</h1></div>
+          <button class="ghost" id="refreshBtn" type="button">Làm mới</button>
+        </header>
+
+        <section class="card">
+          <div class="section-head"><div><h2>Inbound theo SKU base</h2><p class="muted">Nhấp vào SKU + Parent PO để xem giao dịch outbound. Xóa sẽ xóa tất cả inbound và outbound khớp Parent PO + SKU.</p></div><span class="muted" id="inboundCount">0 dòng</span></div>
+          <div class="filters">
+            <label>Tìm SKU<input id="skuSearch" placeholder="Nhập SKU base"></label>
+            <label>Tìm Parent PO<input id="parentSearch" placeholder="Nhập Parent PO"></label>
+            <button class="ghost" id="clearSearch" type="button">Xóa tìm kiếm</button>
+          </div>
+          <div id="notice" class="notice" hidden></div>
+          <div class="table-wrap"><table><thead><tr><th>SKU base</th><th>Ngày nhập</th><th>Parent PO</th><th>Packing List No</th><th class="number">Số carton</th><th>Thao tác</th></tr></thead><tbody id="inboundBody"></tbody></table></div>
+        </section>
+
+        <section class="card">
+          <div class="section-head"><div class="detail-title"><h2>Chi tiết outbound</h2><span class="muted" id="selectedLabel">Chưa chọn SKU</span></div><div class="totals"><span>Tổng: <b id="outboundTotal">0</b></span><span class="exported">Đã xuất (cont &gt; 0): <b id="exportedCarton">0</b></span><span class="remaining">Còn lại (cont = 0): <b id="remainingCarton">0</b></span></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Ngày xuất</th><th>Job No</th><th>Datercv</th><th>Child PO</th><th>Số cont</th><th class="number">Số carton</th></tr></thead><tbody id="outboundBody"><tr><td class="empty" colspan="6">Chọn một SKU + Parent PO ở bảng trên.</td></tr></tbody></table></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script>
+    const API = 'http://localhost:3005';
+    const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+    const $ = id => document.getElementById(id);
+    let inboundRows = [];
+    let selectedKey = '';
+
+    function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
+    function formatDate(value) { const text = String(value || '').slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text.split('-').reverse().join('/') : '-'; }
+    function formatNumber(value) { return Number(value || 0).toLocaleString('vi-VN'); }
+    function query(path) { return `${path}${path.includes('?') ? '&' : '?'}connectionString=${encodeURIComponent(connectionString)}`; }
+    function showNotice(message, error = false) { $('notice').hidden = false; $('notice').textContent = message; $('notice').style.background = error ? '#fef2f2' : '#ecfdf5'; $('notice').style.color = error ? '#b91c1c' : '#065f46'; }
+    async function request(path) { const response = await fetch(`${API}${path}`); const payload = await response.json().catch(() => ({})); if (!response.ok || !payload.ok) throw new Error(payload.message || `HTTP ${response.status}`); return payload; }
+
+    function renderInbound() {
+      const skuKeyword = $('skuSearch').value.trim().toLowerCase();
+      const parentKeyword = $('parentSearch').value.trim().toLowerCase();
+      const rows = inboundRows.filter(row => (!skuKeyword || String(row.sku || '').toLowerCase().includes(skuKeyword)) && (!parentKeyword || String(row.parentpo || '').toLowerCase().includes(parentKeyword)));
+      $('inboundCount').textContent = `${rows.length} dòng`;
+      $('inboundBody').innerHTML = rows.length ? rows.map(row => {
+        const rowIndex = inboundRows.indexOf(row);
+        const key = `${row.sku}\u0000${row.parentpo}\u0000${row.packinglistno}\u0000${row.received_date}`;
+        return `<tr class="selectable${key === selectedKey ? ' selected' : ''}" data-row-index="${rowIndex}"><td><button class="sku-button" type="button">${escapeHtml(row.sku)}</button></td><td>${formatDate(row.received_date)}</td><td>${escapeHtml(row.parentpo)}</td><td>${escapeHtml(row.packinglistno)}</td><td class="number">${formatNumber(row.total_carton)}</td><td><button class="danger" data-delete-inbound="${rowIndex}" type="button">Xóa SKU</button></td></tr>`;
+      }).join('') : '<tr><td class="empty" colspan="6">Không có dữ liệu inbound.</td></tr>';
+    }
+
+    async function loadDetails(row) {
+      selectedKey = `${row.sku}\u0000${row.parentpo}\u0000${row.packinglistno}\u0000${row.received_date}`;
+      $('selectedLabel').textContent = `${row.sku} / ${row.parentpo} / ${row.packinglistno}`;
+      $('outboundTotal').textContent = '0'; $('exportedCarton').textContent = '0'; $('remainingCarton').textContent = '0';
+      $('outboundBody').innerHTML = '<tr><td class="empty" colspan="6">Đang tải dữ liệu...</td></tr>';
+      renderInbound();
+      try {
+        const payload = await request(query(`/api/transactions/outbound-details?sku=${encodeURIComponent(row.sku)}&parentpo=${encodeURIComponent(row.parentpo)}`));
+        $('outboundTotal').textContent = formatNumber(payload.totalCarton);
+        $('exportedCarton').textContent = formatNumber(payload.exportedCarton);
+        $('remainingCarton').textContent = formatNumber(payload.remainingCarton);
+        $('outboundBody').innerHTML = payload.rows?.length ? payload.rows.map(detail => `<tr><td>${formatDate(detail.export_date)}</td><td>${escapeHtml(detail.jobno)}</td><td>${formatDate(detail.datercv)}</td><td>${escapeHtml(detail.childpo)}</td><td>${escapeHtml(detail.container)}</td><td class="number">${formatNumber(detail.total_carton)}</td></tr>`).join('') : '<tr><td class="empty" colspan="6">Không có outbound phù hợp.</td></tr>';
+      } catch (error) {
+        $('outboundBody').innerHTML = `<tr><td class="empty" colspan="6">${escapeHtml(error.message)}</td></tr>`;
+      }
+    }
+
+    async function loadInbound() {
+      $('refreshBtn').disabled = true;
+      try {
+        const payload = await request(query('/api/transactions/inbound-summary'));
+        inboundRows = payload.rows || [];
+        renderInbound();
+        showNotice(`Đã tải ${inboundRows.length} dòng inbound.`);
+      } catch (error) { showNotice(error.message, true); }
+      finally { $('refreshBtn').disabled = false; }
+    }
+
+    async function deleteInboundSku(row, button) {
+      const sku = String(row.sku || '').trim();
+      const parentpo = String(row.parentpo || '').trim();
+      if (!sku || !parentpo) return showNotice('Thiếu SKU hoặc Parent PO, không thể xóa.', true);
+      if (!confirm(`Xóa toàn bộ inbound và outbound có Parent PO "${parentpo}" + SKU "${sku}"? Thao tác này không thể hoàn tác.`)) return;
+      button.disabled = true;
+      try {
+        const response = await fetch(`${API}/api/transactions/inbound-sku`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString, sku, parentpo })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.ok) throw new Error(payload.message || `HTTP ${response.status}`);
+        if (selectedKey.startsWith(`${sku}\u0000${parentpo}\u0000`)) {
+          selectedKey = '';
+          $('selectedLabel').textContent = 'Chưa chọn SKU';
+          $('outboundTotal').textContent = '0';
+          $('exportedCarton').textContent = '0';
+          $('remainingCarton').textContent = '0';
+          $('outboundBody').innerHTML = '<tr><td class="empty" colspan="6">Chọn một SKU + Parent PO ở bảng trên.</td></tr>';
+        }
+        showNotice(`Đã xóa ${formatNumber(payload.deletedInbound)} dòng inbound và ${formatNumber(payload.deletedOutbound)} dòng outbound.`);
+        await loadInbound();
+      } catch (error) {
+        showNotice(error.message, true);
+        button.disabled = false;
+      }
+    }
+
+    $('inboundBody').addEventListener('click', event => {
+      const deleteButton = event.target.closest('[data-delete-inbound]');
+      if (deleteButton) {
+        const row = inboundRows[Number(deleteButton.dataset.deleteInbound)];
+        if (row) deleteInboundSku(row, deleteButton);
+        return;
+      }
+      const rowElement = event.target.closest('tr[data-row-index]');
+      if (!rowElement) return;
+      const row = inboundRows[Number(rowElement.dataset.rowIndex)];
+      if (row) loadDetails(row);
+    });
+    $('skuSearch').addEventListener('input', renderInbound);
+    $('parentSearch').addEventListener('input', renderInbound);
+    $('clearSearch').addEventListener('click', () => { $('skuSearch').value = ''; $('parentSearch').value = ''; renderInbound(); });
+    $('refreshBtn').addEventListener('click', loadInbound);
+    loadInbound();
+  </script>
+</body>
+</html>

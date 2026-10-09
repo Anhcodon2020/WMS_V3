@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BBR Report</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+      :root { --bg: #f3f6fb; --panel: #fff; --border: #dfe7f5; --text: #14213d; --muted: #5b6b8a; --primary: #2563eb; --danger: #b91c1c; }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: var(--text); font-family: Inter, 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #edf4ff, #f8fafc); }
+      .shell { display: flex; min-height: 100vh; }
+      aside { width: 240px; padding: 22px 16px; color: #e2e8f0; background: linear-gradient(180deg, #101c38, #16284a); }
+      .brand { display: flex; align-items: center; gap: 12px; padding: 8px 10px 18px; border-bottom: 1px solid #ffffff2e; font-weight: 700; }
+      .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #2563eb; }
+      nav { display: grid; gap: 8px; margin-top: 18px; }
+      nav a { padding: 11px 12px; border-radius: 12px; color: #dfeafc; text-decoration: none; font-weight: 600; }
+      nav a.active, nav a:hover { color: #fff; background: #60a5fa2e; }
+      main { flex: 1; padding: 30px 24px 40px; min-width: 0; }
+      .page { max-width: 1600px; margin: auto; }
+      .topbar, .card-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+      h1, h2 { margin: 0; } h1 { font-size: 2rem; } h2 { font-size: 1.15rem; }
+      .muted { color: var(--muted); }
+      .card { margin-top: 20px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--panel); box-shadow: 0 10px 30px #0f172a14; }
+      .controls, .form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+      label { display: grid; gap: 7px; color: var(--muted); font-size: .88rem; font-weight: 600; }
+      input { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: #f8fafc; }
+      button { border: 0; border-radius: 9px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
+      .primary { color: white; background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+      .ghost { color: var(--text); background: #edf2ff; }
+      .danger { color: var(--danger); background: #fef2f2; }
+      .actions { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+      .notice { margin-top: 14px; padding: 10px 12px; border-radius: 9px; background: #ecfdf5; color: #065f46; }
+      .import-progress { margin-top: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: #f8fafc; }
+      .import-progress-head { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .88rem; font-weight: 700; }
+      .progress-track { height: 8px; margin-top: 9px; overflow: hidden; border-radius: 999px; background: #dbeafe; }
+      .progress-bar { height: 100%; width: 0; border-radius: inherit; background: var(--primary); transition: width .25s ease; }
+      .table-wrap { overflow: auto; margin-top: 16px; }
+      table { width: 100%; min-width: 1200px; border-collapse: collapse; }
+      th, td { padding: 10px 9px; text-align: left; border-bottom: 1px solid #edf2f7; white-space: nowrap; }
+      th { color: var(--muted); background: #f8fafc; font-size: .78rem; text-transform: uppercase; }
+      .row-actions { display: flex; gap: 7px; }
+      .inbound-matched td { background: #dcfce7; }
+      .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+      .summary-tile { padding: 14px 16px; border-radius: 12px; background: #f8fafc; border: 1px solid var(--border); }
+      .summary-tile .value { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+      .weeks-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+      .week-tile { padding: 10px; border-radius: 10px; background: #eef2ff; border: 1px solid var(--border); text-align: center; }
+      .week-tile.current { background: #dbeafe; border-color: #93c5fd; }
+      .week-tile .label { font-size: .72rem; color: var(--muted); font-weight: 600; }
+      .week-tile .value { font-size: 1.05rem; font-weight: 800; margin-top: 4px; }
+      @media (max-width: 1100px) { .weeks-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+      @media (max-width: 900px) { aside { display: none; } main { padding: 20px 14px; } .controls, .form-grid, .summary-grid { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 560px) { .controls, .form-grid, .summary-grid, .weeks-grid { grid-template-columns: 1fr; } .topbar { align-items: flex-start; flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div>
+        <nav aria-label="Main navigation">
+          <a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a>
+          <a href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a>
+          <a href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a>
+          <a href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a>
+          <a href="pickinglist.html" target="_blank" rel="noopener noreferrer">📋 Picking List</a>
+          <a href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a>
+          <a href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a>
+          <a class="active" href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 Reports</a>
+          <a href="updateloc.html" target="_blank" rel="noopener noreferrer">📍 Update location</a>
+          <a href="#" target="_blank" rel="noopener noreferrer">⚙️ Settings</a>
+        </nav>
+      </aside>
+      <main>
+        <div class="page">
+          <header class="topbar">
+            <div><p class="muted">Warehouse Management System</p><h1>BBR Report</h1></div>
+            <div class="actions">
+              <label class="primary" style="padding:10px 14px;border-radius:9px;cursor:pointer">Import Excel<input id="importFile" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+              <button class="ghost" id="downloadTemplateBtn" type="button">Tải template update</button>
+              <button class="ghost" id="refreshBtn" type="button">Làm mới</button>
+            </div>
+          </header>
+
+          <section class="card">
+            <div class="card-header"><h2>Import &amp; xóa theo Parent PO</h2></div>
+            <p class="muted">Import: cột E=Parent PO, I=PO, S=Item. Nếu đã tồn tại (Parent PO + PO + Item) sẽ cập nhật deliverydate (cột H), qty (cột Z), cbm (cột AD). Nếu chưa có sẽ thêm mới origin (cột C), supplier (cột F), hud_DC (cột R) kèm các cột trên.</p>
+            <div id="importProgress" class="import-progress" role="status" aria-live="polite" hidden>
+              <div class="import-progress-head"><span id="importProgressText">Đang chuẩn bị import...</span><span id="importProgressPercent">0%</span></div>
+              <div class="progress-track"><div id="importProgressBar" class="progress-bar"></div></div>
+            </div>
+            <div class="controls" style="grid-template-columns: 2fr 1fr;">
+              <label>Xóa theo Parent PO<input id="deleteParentPoInput" placeholder="Nhập Parent PO cần xóa..."></label>
+              <div class="actions"><button class="danger" id="deleteParentPoBtn" type="button">Xóa Parent PO</button></div>
+            </div>
+            <div class="controls" style="grid-template-columns: 2fr 1fr 1fr;">
+              <label>Parent PO cập nhật ngày<input id="editDeliveryParentPoInput" placeholder="Nhập Parent PO..."></label>
+              <label>Delivery date mới<input id="editDeliveryDateInput" type="date"></label>
+              <div class="actions"><button class="primary" id="updateDeliveryDateBtn" type="button">Cập nhật ngày</button></div>
+            </div>
+            <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header"><h2>Thống kê theo khoảng ngày</h2><span class="muted">Dựa trên deliverydate</span></div>
+            <div class="controls" style="grid-template-columns: 1fr 1fr auto auto;">
+              <label>Từ ngày<input id="fromDate" type="date"></label>
+              <label>Đến ngày<input id="toDate" type="date"></label>
+              <div class="actions"><button class="primary" id="exportSummaryBtn" type="button">Xuất Excel</button></div>
+              <div class="actions"><button class="ghost" id="clearRangeBtn" type="button">Xóa khoảng ngày</button></div>
+            </div>
+            <div class="summary-grid">
+              <div class="summary-tile"><div class="muted">Số dòng</div><div class="value" id="statRows">0</div></div>
+              <div class="summary-tile"><div class="muted">Số Parent PO</div><div class="value" id="statParentPo">0</div></div>
+              <div class="summary-tile"><div class="muted">Tổng Qty</div><div class="value" id="statQty">0</div></div>
+              <div class="summary-tile"><div class="muted">Tổng CBM</div><div class="value" id="statCbm">0</div></div>
+              <div class="summary-tile"><div class="muted">CBM pallet 1m2</div><div class="value" id="statCbm1m2">0</div></div>
+              <div class="summary-tile"><div class="muted">CBM pallet 1m6</div><div class="value" id="statCbm1m6">0</div></div>
+              <div class="summary-tile"><div class="muted">CBM pallet 1m9</div><div class="value" id="statCbm1m9">0</div></div>
+            </div>
+            <div class="table-wrap">
+              <table style="min-width: 600px;">
+                <thead><tr><th>Hub/DC</th><th>FDC</th><th>Số dòng</th><th>Tổng Qty</th><th>Tổng CBM</th></tr></thead>
+                <tbody id="hubCbmBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header"><h2>CBM 8 tuần gần nhất</h2><span class="muted">Tính từ tuần hiện tại (Thứ 2 - Chủ nhật)</span></div>
+            <div class="weeks-grid" id="weeksGrid"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header"><h2>Chi tiết BBR Report</h2><div class="actions"><input id="searchParentPoInput" placeholder="Tìm theo Parent PO..." aria-label="Tìm theo Parent PO"></div></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Nhà cung cấp</th><th>Parent PO</th><th>PO</th><th>Item</th><th>Qty</th><th>CBM</th><th>Total CBM</th><th>Delivery date</th><th>Loại pallet</th></tr>
+                </thead>
+                <tbody id="reportBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005';
+      const $ = id => document.getElementById(id);
+      let reportRows = [];
+      const notice = $('notice');
+
+      function showNotice(message, error = false) {
+        notice.hidden = false;
+        notice.textContent = message;
+        notice.style.background = error ? '#fef2f2' : '#ecfdf5';
+        notice.style.color = error ? '#b91c1c' : '#065f46';
+      }
+
+      function setImportProgress(percent, message) {
+        $('importProgress').hidden = false;
+        $('importProgressText').textContent = message;
+        $('importProgressPercent').textContent = `${percent}%`;
+        $('importProgressBar').style.width = `${percent}%`;
+      }
+
+      function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }
+
+      function toDateOnly(value) {
+        if (!value) return '';
+        // deliverydate is supplied by the API as MySQL's DATE text (YYYY-MM-DD).
+        // Keep it as text so the browser never applies a timezone conversion.
+        const text = String(value).trim();
+        const match = text.match(/^\d{4}-\d{2}-\d{2}/);
+        return match ? match[0] : '';
+      }
+
+      function excelDateToISO(value) {
+        if (value instanceof Date) return isNaN(value.getTime()) ? '' : value.toISOString().slice(0, 10);
+        if (typeof value === 'number' && value > 0) {
+          const parsed = XLSX.SSF.parse_date_code(value);
+          if (!parsed) return '';
+          return `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`;
+        }
+        const text = String(value || '').trim();
+        if (!text) return '';
+        const dmy = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+        if (dmy) {
+          let [, d, m, y] = dmy;
+          if (y.length === 2) y = `20${y}`;
+          return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        }
+        const parsedDate = new Date(text);
+        return isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString().slice(0, 10);
+      }
+
+      async function loadRows() {
+        const response = await fetch(`${api}/api/bbrreport?connectionString=${encodeURIComponent(connectionString)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải bbrreport.');
+        reportRows = payload.rows || [];
+        renderTable();
+        renderStats();
+        renderWeeks();
+      }
+
+      function renderTable() {
+        const keyword = $('searchParentPoInput').value.trim().toLowerCase();
+        const filtered = keyword ? reportRows.filter(row => String(row.parentpo || '').toLowerCase().includes(keyword)) : reportRows;
+        $('reportBody').innerHTML = filtered.map(row => `
+          <tr class="${number(row.hasInbound) ? 'inbound-matched' : ''}">
+            <td>${row.supplierName || row.supplierCode || row.supplier || ''}</td>
+            <td>${row.parentpo || ''}</td>
+            <td>${row.po || ''}</td>
+            <td>${row.item || ''}</td>
+            <td>${number(row.qty)}</td>
+            <td>${number(row.cbm).toFixed(4)}</td>
+            <td>${number(row.totalcbm).toFixed(4)}</td>
+            <td>${toDateOnly(row.deliverydate)}</td>
+            <td>${row.kindpallet || ''}</td>
+          </tr>
+        `).join('');
+      }
+
+      function renderStats() {
+        const filtered = getDateFilteredRows();
+        const parentPoSet = new Set(filtered.map(row => row.parentpo).filter(Boolean));
+        const totalQty = filtered.reduce((sum, row) => sum + number(row.qty), 0);
+        const totalCbm = filtered.reduce((sum, row) => sum + number(row.totalcbm), 0);
+        $('statRows').textContent = filtered.length;
+        $('statParentPo').textContent = parentPoSet.size;
+        $('statQty').textContent = totalQty.toLocaleString('vi-VN');
+        $('statCbm').textContent = totalCbm.toFixed(3);
+        const palletCapacity = { '1m2': 3, '1m6': 4, '1m9': 4.75 };
+        Object.entries(palletCapacity).forEach(([kindPallet, capacity]) => {
+          const total = filtered
+            .filter(row => String(row.kindpallet || '').trim().toLowerCase() === kindPallet)
+            .reduce((sum, row) => sum + number(row.totalcbm), 0);
+          $(`statCbm${kindPallet}`).textContent = Math.ceil((total / capacity) * 1.5);
+        });
+        const hubStats = filtered.reduce((groups, row) => {
+          const hub = String(row.hud_DC || row.hub_DC || 'Chưa xác định').trim() || 'Chưa xác định';
+          const group = groups.get(hub) || { fdc: String(row.fdc || '').trim() || 'Chưa map FDC', rows: 0, qty: 0, cbm: 0 };
+          group.rows += 1;
+          group.qty += number(row.qty);
+          group.cbm += number(row.totalcbm);
+          groups.set(hub, group);
+          return groups;
+        }, new Map());
+        $('hubCbmBody').innerHTML = [...hubStats.entries()]
+          .sort(([hubA], [hubB]) => hubA.localeCompare(hubB, 'vi'))
+          .map(([hub, stat]) => `<tr><td>${hub}</td><td>${stat.fdc}</td><td>${stat.rows}</td><td>${stat.qty.toLocaleString('vi-VN')}</td><td>${stat.cbm.toFixed(3)}</td></tr>`)
+          .join('') || '<tr><td colspan="5" class="muted">Không có dữ liệu trong khoảng ngày đã chọn.</td></tr>';
+      }
+
+      function getDateFilteredRows() {
+        const from = $('fromDate').value;
+        const to = $('toDate').value;
+        return reportRows.filter(row => {
+          const date = toDateOnly(row.deliverydate);
+          if (from && (!date || date < from)) return false;
+          if (to && (!date || date > to)) return false;
+          return true;
+        });
+      }
+
+      function exportDateSummary() {
+        const groups = getDateFilteredRows().reduce((summary, row) => {
+          const parentpo = String(row.parentpo || '').trim();
+          const supplier = String(row.supplierName || row.supplierCode || row.supplier || '').trim();
+          const deliverydate = toDateOnly(row.deliverydate);
+          const key = `${parentpo}\u0000${supplier}\u0000${deliverydate}`;
+          const group = summary.get(key) || { parentpo, supplier, deliverydate, totalcbm: 0 };
+          group.totalcbm += number(row.totalcbm);
+          summary.set(key, group);
+          return summary;
+        }, new Map());
+        const rows = [...groups.values()]
+          .sort((a, b) => a.deliverydate.localeCompare(b.deliverydate) || a.parentpo.localeCompare(b.parentpo, 'vi'))
+          .map(row => ({ 'Parent PO': row.parentpo, 'Tên nhà cung cấp': row.supplier, Deliverydate: row.deliverydate, 'Tổng CBM': Number(row.totalcbm.toFixed(3)) }));
+        if (!rows.length) return showNotice('Không có dữ liệu trong khoảng ngày đã chọn để xuất Excel.', true);
+        const sheet = XLSX.utils.json_to_sheet(rows);
+        sheet['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 14 }];
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, 'Tong hop CBM');
+        const from = $('fromDate').value || 'tat-ca';
+        const to = $('toDate').value || 'tat-ca';
+        XLSX.writeFile(workbook, `tong_hop_cbm_${from}_${to}.xlsx`);
+      }
+
+      function getWeekStart(date) {
+        const result = new Date(date);
+        result.setHours(0, 0, 0, 0);
+        const day = (result.getDay() + 6) % 7; // Monday = 0
+        result.setDate(result.getDate() - day);
+        return result;
+      }
+
+      function formatShortDate(date) {
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+      }
+
+      function renderWeeks() {
+        const today = new Date();
+        const currentWeekStart = getWeekStart(today);
+        const weeks = [];
+        for (let i = 0; i <= 7; i += 1) {
+          const start = new Date(currentWeekStart);
+          start.setDate(start.getDate() + i * 7);
+          const end = new Date(start);
+          end.setDate(end.getDate() + 6);
+          weeks.push({ start, end, isCurrent: i === 0, totalCbm: 0 });
+        }
+        reportRows.forEach(row => {
+          const dateText = toDateOnly(row.deliverydate);
+          if (!dateText) return;
+          const date = new Date(`${dateText}T00:00:00`);
+          if (isNaN(date.getTime())) return;
+          const bucket = weeks.find(week => date >= week.start && date <= week.end);
+          if (bucket) bucket.totalCbm += number(row.totalcbm);
+        });
+        $('weeksGrid').innerHTML = weeks.map(week => `
+          <div class="week-tile ${week.isCurrent ? 'current' : ''}">
+            <div class="label">${formatShortDate(week.start)} - ${formatShortDate(week.end)}</div>
+            <div class="value">${week.totalCbm.toFixed(2)}</div>
+          </div>
+        `).join('');
+      }
+
+      function downloadUpdateTemplate() {
+        const headers = ['origin', 'po', 'item', 'suppliercode', 'parentpo', 'deliverydate', 'qty', 'cbm', 'hub_DC'];
+        const sheet = XLSX.utils.aoa_to_sheet([headers]);
+        sheet['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 14 }];
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, 'BBR Update');
+        XLSX.writeFile(workbook, 'bbrreport_update_template.xlsx');
+      }
+
+      async function importFile(file) {
+        setImportProgress(5, `Đang đọc file ${file.name}...`);
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        // Read the Excel file using XLSX library
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+        setImportProgress(25, 'Đang kiểm tra dữ liệu trong file...');
+        // get the first sheet from the workbook
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        // convert the sheet to a 2D array (grid) for easier processing
+        const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        if(!grid.length) throw new Error('File Excel không có dữ liệu.');
+        //===================================
+        // 1.Đọc header và chuẩn hóa các tên cột để dễ dàng truy xuất dữ liệu
+        //===================================
+        const normalizedHeaders = value => String(value ??'').trim().replace(/[^a-z0-9]/g, '').toLowerCase();
+        const headerIndex = {};
+        grid[0].forEach((header, index) => {
+          headerIndex[header] = index;
+        });
+        //===================================
+        // 2. kiểm tra template
+        //===================================
+        const requiredHeaders = ['Origin', 'Child PO', 'Item NO', 'Manuf Code', 'Parent PO', 'Delivery Dt', 'Carton', 'MC CBM', 'DeconSOL PT'];
+        const missingHeaders = requiredHeaders.filter(header => headerIndex[header] === undefined);
+        if (missingHeaders.length) throw new Error(`File Excel thiếu các cột bắt buộc: ${missingHeaders.join(', ')}`);
+        //===================================
+        // 3. Đọc dữ liệu từ các dòng và ánh xạ vào các trường tương ứng
+        //===================================
+        const rows = grid.slice(1)
+          .map((cells, index) => 
+          { 
+            const excelRowIndex = index + 2; // +2 to account for header row and 0-based index
+            return {
+              origin: String(cells[headerIndex['Origin']] ?? '').trim(),
+              supplier: String(cells[headerIndex['Manuf Code']] ?? '').trim(),
+              parentpo: String(cells[headerIndex['Parent PO']] ?? '').trim(),
+              po: String(cells[headerIndex['Child PO']] ?? '').trim(),
+              item: String(cells[headerIndex['Item NO']] ?? '').trim(),
+              deliverydate: excelDateToISO(cells[headerIndex['Delivery Dt']]),
+              qty: number(cells[headerIndex['Carton']]),
+              cbm: number(cells[headerIndex['MC CBM']]),
+              hub_DC: String(cells[headerIndex['DeconSOL PT']] ?? '').trim(),
+              excelRowIndex
+            };
+          })
+          .filter(row => row.parentpo && row.po && row.item);
+        //===================================
+        // 4. Kiểm tra dữ liệu sau khi ánh xạ
+        //===================================
+        if (!rows.length) throw new Error('Không tìm thấy dòng dữ liệu hợp lệ (Parent PO/PO/Item) trong file.');
+
+        setImportProgress(50, `Đang import ${rows.length.toLocaleString('vi-VN')} dòng vào database...`);
+        //===================================
+        // 5. Gửi dữ liệu lên server để import vào database
+        //===================================
+        const response = await fetch(`${api}/api/bbrreport/import`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString, rows })
+        });
+        //===================================
+        // 6. Xử lý phản hồi từ server
+        //===================================
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Import thất bại.');
+        //===================================
+        // 7. Cập nhật giao diện sau khi import xong
+        //===================================
+        setImportProgress(85, 'Import xong. Đang refresh dữ liệu từ database...');
+        await loadRows();
+        setImportProgress(100, 'Đã hoàn tất import và refresh dữ liệu.');
+        showNotice(`Import xong: thêm ${payload.inserted}, cập nhật ${payload.updated}, từ chối ${payload.rejected.length}. ${payload.rejected.map(item => `Dòng ${item.row}: ${item.reason}`).join(' ')}`);
+        //===================================
+        // 8. Kết thúc quá trình import
+        //===================================
+        const rejectedCount=Array.isArray(payload.rejected) ? payload.rejected.length : 0;
+        const rejectedMessage = Array.isArray(payload.rejected) ? payload.rejected.map(item => `Dòng ${item.row}: ${item.reason}`).join(' ') : '';
+        showNotice(`Import xong: thêm ${payload.inserted}, cập nhật ${payload.updated}, từ chối ${rejectedCount}. ${rejectedMessage}`);
+      }
+
+      $('importFile').addEventListener('change', event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        importFile(file)
+          .catch(error => {
+            setImportProgress(0, 'Import thất bại. Vui lòng kiểm tra thông báo bên dưới.');
+            showNotice(error.message, true);
+          })
+          .finally(() => { event.target.value = ''; });
+      });
+      $('downloadTemplateBtn').addEventListener('click', downloadUpdateTemplate);
+      $('refreshBtn').addEventListener('click', () => loadRows().catch(error => showNotice(error.message, true)));
+      $('searchParentPoInput').addEventListener('input', renderTable);
+      $('fromDate').addEventListener('change', renderStats);
+      $('toDate').addEventListener('change', renderStats);
+      $('exportSummaryBtn').addEventListener('click', exportDateSummary);
+      $('clearRangeBtn').addEventListener('click', () => { $('fromDate').value = ''; $('toDate').value = ''; renderStats(); });
+      async function updateDeliveryDate() {
+        const parentpo = $('editDeliveryParentPoInput').value.trim();
+        const deliverydate = $('editDeliveryDateInput').value;
+        if (!parentpo || !deliverydate) return showNotice('Vui lòng nhập Parent PO và chọn delivery date mới.', true);
+        const button = $('updateDeliveryDateBtn');
+        button.disabled = true;
+        button.textContent = 'Đang cập nhật...';
+        showNotice(`Đang cập nhật delivery date cho Parent PO "${parentpo}"...`);
+        try {
+          const response = await fetch(`${api}/api/bbrreport/deliverydate-by-parentpo`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ connectionString, parentpo, deliverydate })
+          });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể cập nhật delivery date.');
+
+          showNotice(`Đã cập nhật ${payload.affectedRows} dòng. Đang refresh dữ liệu từ database...`);
+          await loadRows();
+          showNotice(`Đã cập nhật ${payload.affectedRows} dòng cho Parent PO "${parentpo}" và refresh xong ${reportRows.length} dòng dữ liệu.`);
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Cập nhật ngày';
+        }
+      }
+
+      $('updateDeliveryDateBtn').addEventListener('click', updateDeliveryDate);
+      $('deleteParentPoBtn').addEventListener('click', () => {
+        const parentpo = $('deleteParentPoInput').value.trim();
+        if (!parentpo) return showNotice('Vui lòng nhập Parent PO cần xóa.', true);
+        if (!confirm(`Xóa toàn bộ dữ liệu có Parent PO "${parentpo}"?`)) return;
+        fetch(`${api}/api/bbrreport/by-parentpo`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connectionString, parentpo })
+        })
+          .then(response => response.json())
+          .then(payload => {
+            if (!payload.ok) throw new Error(payload.message);
+            showNotice(`Đã xóa ${payload.affectedRows} dòng theo Parent PO "${parentpo}".`);
+            $('deleteParentPoInput').value = '';
+            return loadRows();
+          })
+          .catch(error => showNotice(error.message, true));
+      });
+
+      loadRows().catch(error => showNotice(error.message, true));
+    </script>
+  </body>
+</html>

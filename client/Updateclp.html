@@ -1,0 +1,2465 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update CLP</title>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <style>
+      :root { --panel:#fff; --border:#dfe7f5; --text:#14213d; --muted:#5b6b8a; --primary:#2563eb; }
+      * { box-sizing:border-box; }
+      body { margin:0; color:var(--text); font-family:Inter,'Segoe UI',Arial,sans-serif; background:linear-gradient(180deg,#edf4ff,#f8fafc); }
+      .shell { display:flex; min-height:100vh; }
+      aside { width:240px; padding:22px 16px; color:#e2e8f0; background:linear-gradient(180deg,#101c38,#16284a); }
+      .brand { display:flex; align-items:center; gap:12px; padding:8px 10px 18px; border-bottom:1px solid #ffffff2e; font-weight:700; }
+      .brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:#2563eb; }
+      nav { display:grid; gap:8px; margin-top:18px; }
+      nav a { padding:11px 12px; border-radius:12px; color:#dfeafc; text-decoration:none; font-weight:600; }
+      nav a.active, nav a:hover { color:#fff; background:#60a5fa2e; }
+      main { flex:1; min-width:0; padding:30px 24px 40px; }
+      .page { max-width:1500px; margin:auto; }
+      .topbar, .card-header, .actions { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+      h1, h2 { margin:0; } h1 { font-size:2rem; } h2 { font-size:1.15rem; } .muted { color:var(--muted); }
+      .card { margin-top:20px; padding:20px; border:1px solid var(--border); border-radius:16px; background:var(--panel); box-shadow:0 10px 30px #0f172a14; }
+      .toolbar { display:grid; grid-template-columns:repeat(3,minmax(180px,1fr)) auto; gap:14px; align-items:end; margin-top:16px; }
+      label { display:grid; gap:7px; color:var(--muted); font-size:.88rem; font-weight:600; }
+      input, select { width:100%; padding:10px 11px; border:1px solid var(--border); border-radius:9px; color:var(--text); background:#f8fafc; }
+      button { border:0; border-radius:9px; padding:10px 14px; cursor:pointer; font-weight:700; }
+      button:disabled { cursor:not-allowed; opacity:.55; }
+      .primary { color:#fff; background:linear-gradient(135deg,#2563eb,#1d4ed8); }
+      .ghost { color:var(--text); background:#edf2ff; } .success { color:#065f46; background:#d1fae5; }
+      .notice { margin-top:14px; padding:10px 12px; border-radius:9px; } .notice.error { color:#b91c1c; background:#fef2f2; } .notice.ok { color:#065f46; background:#ecfdf5; }
+      .table-wrap { overflow:auto; margin-top:16px; }
+      table { width:100%; min-width:1900px; border-collapse:collapse; }
+      th, td { padding:11px 9px; text-align:left; border-bottom:1px solid #edf2f7; white-space:nowrap; }
+      th { color:var(--muted); background:#f8fafc; font-size:.78rem; text-transform:uppercase; position:sticky; top:0; }
+      .empty { padding:28px; text-align:center; color:var(--muted); }
+      .count { padding:7px 10px; border-radius:8px; background:#eff6ff; color:#1d4ed8; font-weight:700; }
+      @media (max-width:900px) { aside { display:none; } main { padding:20px 14px; } .toolbar { grid-template-columns:1fr; } }
+     .danger { color:#fff; background:#dc2626; }
+     .danger:hover { background:#b91c1c; }
+     /* =========================
+       DELETE MODAL
+    ========================= */
+    .modal-overlay {
+       position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+ }
+ 
+     .modal-overlay[hidden] {
+        display: none;
+      } 
+      .delete-modal {
+        width: min(460px, 100%);
+
+        padding: 26px;
+
+        background: #ffffff;
+        border: 1px solid #dfe7f5;
+        border-radius: 18px;
+
+        box-shadow:
+          0 25px 60px rgba(15, 23, 42, 0.25);
+
+        animation: deleteModalIn 0.18s ease-out;
+      }
+      @keyframes deleteModalIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.98);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      .delete-icon {
+          width: 54px;
+          height: 54px;
+
+          display: grid;
+          place-items: center;
+
+          margin: 0 auto 14px;
+
+          border-radius: 50%;
+
+          background: #fee2e2;
+          color: #dc2626;
+
+          font-size: 25px;
+        }
+
+  .delete-modal h3 {
+  margin: 0;
+
+  text-align: center;
+
+  color: #14213d;
+  font-size: 1.25rem;
+}
+
+.delete-message {
+  margin: 9px 0 20px;
+
+  text-align: center;
+
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.delete-info {
+  overflow: hidden;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  background: #f8fafc;
+}
+
+.delete-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 11px 13px;
+
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.delete-info-row:last-child {
+  border-bottom: 0;
+}
+
+.delete-info-row span {
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.delete-info-row strong {
+  color: #14213d;
+  font-size: 0.9rem;
+  text-align: right;
+  word-break: break-word;
+}
+
+.delete-warning {
+  margin-top: 14px;
+  padding: 11px 12px;
+
+  border: 1px solid #fed7aa;
+  border-radius: 9px;
+
+  color: #9a3412;
+  background: #fff7ed;
+
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+
+.delete-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 22px;
+}
+
+.delete-actions button {
+  min-width: 110px;
+}
+
+.delete-actions .danger {
+  color: #ffffff;
+  background: #dc2626;
+}
+
+.delete-actions .danger:hover {
+  background: #b91c1c;
+}
+
+.delete-actions .danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+/* ================================
+   TOAST NOTIFICATION
+================================ */
+#toastContainer {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 320px;
+  max-width: 420px;
+  padding: 15px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.15),
+    0 3px 8px rgba(15, 23, 42, 0.08);
+
+  pointer-events: auto;
+
+  animation: toastIn 0.3s ease-out;
+}
+
+.toast.success {
+  border-left: 5px solid #16a34a;
+}
+
+.toast.error {
+  border-left: 5px solid #dc2626;
+}
+
+.toast-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.toast.success .toast-icon {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.toast.error .toast-icon {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  margin-bottom: 3px;
+  color: #14213d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.toast-message {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.toast-close {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: pointer;
+  padding: 2px;
+}
+
+.toast-close:hover {
+  color: #334155;
+}
+
+/* Hiện popup */
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Tắt popup */
+.toast.hide {
+  animation: toastOut 0.3s ease-in forwards;
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  #toastContainer {
+    top: 15px;
+    right: 15px;
+    left: 15px;
+  }
+
+  .toast {
+    min-width: 0;
+    width: 100%;
+  }
+}
+ </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside>
+        <div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div>
+        <nav aria-label="Main navigation">
+          <a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a><a href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a><a href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a><a href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a><a href="updatescan.html" target="_blank" rel="noopener noreferrer">🔎 Update scan</a><a href="Updateclp.html" class="active" target="_blank" rel="noopener noreferrer">📄 Update CLP</a><a href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a><a href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a><a href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 BBR Report</a><a href="updateloc.html" target="_blank" rel="noopener noreferrer">📍 Update location</a>
+        </nav>
+      </aside>
+      <main><div class="page">
+        <header class="topbar"><div><p class="muted">Warehouse Management System</p><h1>Update CLP</h1></div><span class="count" id="rowCount">0 dòng</span></header>
+        <section class="card">
+          <div class="card-header"><h2>Thông tin xuất hàng</h2><span class="muted">Job No lấy từ outbound có ngày stuffing và container</span></div>
+          <div class="toolbar">
+            <label>Ngày xuất<input id="exportDate" type="date" /></label>
+            <label>Job No<select id="jobSelect" disabled><option value="">Chọn ngày xuất trước</option></select></label>
+            <label>Người scan<input id="userscan" readonly placeholder="Tự lấy từ scanfile" /></label>
+            <label>Shipment Order<input id="shipmentOrder" list="shipmentOrderOptions" placeholder="Chỉ bắt buộc khi Import Excel" /><datalist id="shipmentOrderOptions"></datalist></label>
+            <div class="actions"><label>Import Excel<input id="importFile" type="file" accept=".xlsx,.xls,.csv" hidden /></label><button class="primary" id="importBtn" type="button">Import Excel</button></div>
+          </div>
+          <div class="actions" style="justify-content:flex-start;margin-top:14px"><button class="ghost" id="loadBtn" type="button" disabled>Xem dữ liệu</button><button class="success" id="plBtn" type="button" disabled>Export PL</button><button class="success" id="ediBtn" type="button" disabled>Export EDI</button>
+           <button class="danger" id="deleteJobnoShpBtn" type="button" disabled>  🗑 Xóa jobno</button>
+          </div>
+          <div id="notice" class="notice" hidden></div>
+        </section>
+        <section class="card"><div class="card-header"><h2>Danh sách CLP</h2><span class="muted">Dữ liệu theo Job No và Shipment Order</span></div><div class="table-wrap"><table><thead><tr><th>SQ</th><th>JobNo</th><th>Shipment Order</th><th>Release Key</th><th>PO Number</th><th>SKU</th><th>Final DC</th><th>Hub DC</th><th>System Pallet</th><th>Measurement</th><th>Weight</th><th>CBM Pallet</th><th>Carton</th><th>Pallet Number</th><th>Cont</th><th>Seal</th><th>CBM</th></tr></thead><tbody id="clpBody"><tr><td class="empty" colspan="18">Chưa có dữ liệu.</td></tr></tbody></table></div></section>
+      </div></main>
+    </div>
+     <!-- Delete Confirmation Modal -->
+     <div class="modal-overlay" id="deleteModal" hidden>
+       <div class="delete-modal">
+        <div class="delete-icon">🗑</div>
+          <h3>Xác nhận xóa</h3>
+          <p class="delete-message">Bạn sắp xóa Job No SHP này.</p>
+          <div class="delete-info">
+            <div class="delete-info-row">
+              <span> Job no </span>
+              <strong id="deleteJobnoShp"></strong>
+            </div>
+            <div class="delete-info-row">
+              <span>Số dòng</span>
+              <strong id="deleteRowCount"></strong>
+            </div>
+          </div>
+          <div class="delete-warning">
+            ⚠️ Dữ liệu sau khi xóa sẽ không thể hoàn tác.
+          </div>
+          <div class="delete-actions">
+            <button
+            type="button"
+            class="ghost"
+            id="cancelDeleteBtn">
+            Hủy
+          </button>
+          <button
+            type="button"
+            class="ghost"
+            id="confirmDeleteBtn">
+             🗑 Xác nhận xóa
+          </button>
+          </div>
+         </div>
+     </div>
+      <div id="toastContainer"></div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005'; const $ = id => document.getElementById(id); let rows = [];
+      const fields = ['jobno','jobno_shp','shipmentorder','release_key','ponumber','sku','finaldc','hubdc','systempallet','measurement','weight','cbm_pallet','carton','palletnumber','cont','seal','cbm'];
+      const headers = { jobno:'jobno', jobno_shp:'jobno_shp', shipmentorder:'shipmentorder', release_key:'release_key', ponumber:'ponumber', sku:'sku', finaldc:'finaldc', hubdc:'hubdc', systempallet:'systempallet', measurement:'measurement', weight:'weight', cbm_pallet:'cbm_pallet', carton:'carton', palletnumber:'palletnumber', cont:'cont', seal:'seal', cbm:'cbm' };
+      function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
+      function showNotice(message, error = false) { $('notice').hidden = false; $('notice').className = `notice ${error ? 'error' : 'ok'}`; $('notice').textContent = message; }
+      async function getJson(url, options) { const response = await fetch(url, options); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải dữ liệu.'); return payload; }
+      let pendingDeleteJobnoShp = '';
+      async function  deleteJobnoShp() {
+         const jobno_shp = $('jobSelect').value.trim();
+
+     if (!jobno_shp) {
+      showNotice('Vui lòng chọn Job No .', true);
+      return;
+     }
+
+  if (!rows.length) {
+    showNotice('Không có dữ liệu để xóa.', true);
+    return;
+  }
+
+  const jobnoShpList = [
+    ...new Set(
+      rows
+        .map(row => String(row.jobno_shp ?? '').trim())
+        .filter(Boolean)
+    )
+  ];
+
+  if (!jobnoShpList.length) {
+    showNotice('Không tìm thấy JobNo SHP để xóa.', true);
+    return;
+  }
+ // Trường hợp chỉ có 1 JobNo SHP
+   pendingDeleteJobnoShp = jobnoShpList[0];
+   $('deleteJobnoShp').textContent=jobno_shp;
+   $('deleteRowCount').textContent = `${rows.length} dòng`;
+   $('confirmDeleteBtn').disabled = false;
+   $('deleteModal').hidden = false; 
+ 
+}
+function closeDeleteModal() {
+  $('deleteModal').hidden = true;
+  pendingDeleteJobnoShp = '';
+}
+async function confirmDeleteJobnoShp() {
+  const jobno_shp = $('jobSelect').value.trim();
+  const jobnoShp = pendingDeleteJobnoShp;
+
+  if (!jobno_shp || !jobnoShp) {
+    closeDeleteModal();
+    return;
+  }
+  const button = $('confirmDeleteBtn');
+   button.disabled = true;
+  button.textContent = 'Đang xóa...';
+
+  try {
+    const payload = await getJson(
+      `${api}/api/updateclp/delete-jobno-shp` +
+      `?connectionString=${encodeURIComponent(connectionString)}` +
+      `&jobno_shp=${encodeURIComponent(jobnoShp)}`,
+      {
+        method: 'DELETE'
+      }
+    );
+
+     // Đóng popup xác nhận ngay sau khi xóa thành công
+       closeDeleteModal();
+      // Reset dữ liệu trên màn hình
+        rows = [];
+        renderRows();
+      // Reset nút xác nhận
+        button.disabled = false;
+        button.textContent = '🗑 Xác nhận xóa';   
+      // Hiển thị thông báo thành công
+        showNotice(
+          payload.message || `Đã xóa Job No SHP ${jobnoShp} thành công.`
+        );   
+    await loadShipmentOrders();
+
+  } catch (error) {
+
+    console.error(error);
+
+    button.disabled = false;
+    button.textContent = '🗑 Xác nhận xóa';
+
+    showNotice(error.message, true);
+  }
+}
+$('exportDate').addEventListener('change', loadJobs);
+
+$('jobSelect').addEventListener('change', () => {
+  loadShipmentOrders().catch(error => {
+    showNotice(error.message, true);
+  });
+});
+
+$('shipmentOrder').addEventListener('input', updateButtons);
+
+$('loadBtn').addEventListener('click', loadRows);
+
+$('importBtn').addEventListener('click', () => {
+  $('importFile').click();
+});
+
+$('importFile').addEventListener('change', () => {
+  importExcel($('importFile').files[0])
+    .catch(error => {
+      showNotice(error.message, true);
+    })
+    .finally(() => {
+      $('importFile').value = '';
+    });
+});
+
+$('plBtn').addEventListener('click', exportPl);
+
+$('ediBtn').addEventListener('click', exportEdi);
+
+$('deleteJobnoShpBtn').addEventListener(
+  'click',
+  deleteJobnoShp
+);
+$('cancelDeleteBtn').addEventListener(
+  'click',
+  closeDeleteModal
+);
+$('confirmDeleteBtn').addEventListener(
+  'click',
+  confirmDeleteJobnoShp
+);
+$('deleteModal').addEventListener('click', (event) => {
+  if (event.target === $('deleteModal')) {
+    closeDeleteModal();
+  }
+});
+
+renderRows();
+       
+      function renderJobs(jobs) { $('jobSelect').innerHTML = '<option value="">Chọn Job No</option>' + jobs.map(job => `<option value="${escapeHtml(job)}">${escapeHtml(job)}</option>`).join(''); $('jobSelect').disabled = !jobs.length; }
+      function renderShipmentOrders(shipmentOrders) { $('shipmentOrderOptions').innerHTML = shipmentOrders.map(value => `<option value="${escapeHtml(value)}"></option>`).join(''); }
+      function updateButtons() { const ready = Boolean($('jobSelect').value); const hasrows = Boolean(rows.length); $('loadBtn').disabled = !ready; $('plBtn').disabled = !hasrows; $('ediBtn').disabled = !hasrows; $('deleteJobnoShpBtn').disabled = !hasrows; }
+      function renderRows() {
+        const tbody = $('clpBody');
+        $('userscan').value = [...new Set(rows.map(row => String(row.packer_name ?? '').trim()).filter(Boolean))].join(', ');
+        tbody.innerHTML=rows.map((row,index) => 
+          `<tr>
+            <td>${index+1}</td>
+            <td>${row.jobno}</td>
+            <td>${row.shipmentorder}</td>
+            <td>${row.relese_key}</td>
+            <td>${row.ponumber}</td>
+            <td>${row.sku}</td>
+            <td>${row.finaldc}</td>
+            <td>${row.hubdc}</td>
+            <td>${row.systempallet}</td>
+            <td>${row.measurement}</td>
+            <td>${row.weight != null && row.weight !== '' ? Number(row.weight).toFixed(3) : ''}</td>
+            <td>${row.cbm_pallet != null && row.cbm_pallet !== '' ? Number(row.cbm_pallet).toFixed(3) : ''}</td>
+            <td>${row.carton}</td>
+            <td>${row.palletnumber}</td>
+            <td>${row.cont}</td>
+            <td>${row.seal}</td>
+            <td>${row.cbm != null && row.cbm !== '' ? Number(row.cbm).toFixed(3) : ''}</td>
+          </tr>`
+        ).join('');
+        updateButtons();
+      }
+     function cleanExcelHeader(value) {
+
+    return String(value ?? '')
+        .replace(/\uFEFF/g, '')
+        .replace(/\u200B/g, '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/[\r\n\t]/g, ' ')
+        .trim()
+        .toLowerCase()
+
+        // Quan trọng:
+        // PO-NUMBER       -> ponumber
+        // ToFinalDC_ID    -> tofinaldcid
+        // G.WEIGHT        -> gweight
+        // Pallet number   -> palletnumber
+        .replace(/[^a-z0-9]/g, '');
+}
+     // ==========================================================
+// 1. CHUẨN HÓA EXCEL MATRIX TRƯỚC KHI IMPORT
+// ==========================================================
+function normalizeExcelMatrix(matrix) {
+
+    if (!Array.isArray(matrix)) {
+        throw new Error('Excel Matrix không hợp lệ.');
+    }
+
+    // ------------------------------------------------------
+    // Chuẩn hóa Header
+    // ------------------------------------------------------
+    function normalizeHeader(value) {
+
+        return String(value ?? '')
+
+            // Remove BOM
+            .replace(/\uFEFF/g, '')
+
+            // Non-breaking space → normal space
+            .replace(/\u00A0/g, ' ')
+
+            // Remove line break / tab
+            .replace(/[\r\n\t]/g, ' ')
+
+            // Remove space đầu/cuối
+            .trim()
+
+            // Lowercase
+            .toLowerCase()
+
+            // Remove tất cả khoảng trắng
+            .replace(/\s+/g, '')
+
+            // Remove ký tự đặc biệt
+            .replace(/[_\-\/().:#]/g, '');
+    }
+
+
+    // ------------------------------------------------------
+    // Chuẩn hóa Value
+    // ------------------------------------------------------
+    function normalizeValue(value) {
+
+        // Null / Undefined
+        if (value === null || value === undefined) {
+            return '';
+        }
+
+
+        // --------------------------------------------------
+        // ExcelJS Formula
+        // --------------------------------------------------
+        if (
+            typeof value === 'object' &&
+            value.result !== undefined
+        ) {
+            value = value.result;
+        }
+
+
+        // --------------------------------------------------
+        // ExcelJS Rich Text
+        // --------------------------------------------------
+        if (
+            value &&
+            typeof value === 'object' &&
+            Array.isArray(value.richText)
+        ) {
+
+            value = value.richText
+                .map(item => item.text ?? '')
+                .join('');
+        }
+
+
+        // --------------------------------------------------
+        // ExcelJS Hyperlink
+        // --------------------------------------------------
+        if (
+            value &&
+            typeof value === 'object' &&
+            value.text !== undefined
+        ) {
+            value = value.text;
+        }
+
+
+        // --------------------------------------------------
+        // Date
+        // Giữ nguyên Date để xử lý sau
+        // --------------------------------------------------
+        if (value instanceof Date) {
+            return value;
+        }
+
+
+        // --------------------------------------------------
+        // String
+        // --------------------------------------------------
+        if (typeof value === 'string') {
+
+            return value
+
+                // BOM
+                .replace(/\uFEFF/g, '')
+
+                // Non-breaking space
+                .replace(/\u00A0/g, ' ')
+
+                // Line break / tab
+                .replace(/[\r\n\t]/g, ' ')
+
+                // Multiple spaces → 1 space
+                .replace(/\s+/g, ' ')
+
+                // Trim
+                .trim();
+        }
+
+
+        return value;
+    }
+
+
+    // ------------------------------------------------------
+    // Clone + Normalize Matrix
+    // ------------------------------------------------------
+    const normalizedMatrix = matrix.map(row => {
+
+        if (!Array.isArray(row)) {
+            return [];
+        }
+
+        return row.map(cell => normalizeValue(cell));
+    });
+
+
+    // ------------------------------------------------------
+    // Tìm dòng Header tốt nhất
+    // ------------------------------------------------------
+    const headerAliases = [
+
+        // Job
+        'jobno',
+        'jobnumber',
+
+        // Release
+        'releasekey',
+        'releasekeyno',
+        'releasekeynumber',
+
+        // PO
+        'ponumber',
+        'pono',
+
+        // SKU
+        'sku',
+        'skuno',
+        'skunumber',
+        'item',
+        'itemcode',
+
+        // DC
+        'tofinaldcid',
+        'finaldc',
+        'finaldcid',
+
+        'tohubdcid',
+        'hubdc',
+        'hubdcid',
+
+        // Pallet
+        'systempalletnumber',
+        'systempalletno',
+        'systempallet',
+
+        'palletnumber',
+        'palletno',
+        'pltnumber',
+        'pltno',
+
+        // Measurement
+        'measurement',
+        'dimension',
+        'dimensions',
+
+        // Weight
+        'gweight',
+        'grossweight',
+        'weight',
+
+        // CBM
+        'cbm',
+        'volume',
+
+        // Carton
+        'ctn',
+        'carton',
+        'cartons',
+        'cartonqty'
+    ];
+
+
+    let bestHeaderRow = -1;
+    let bestScore = 0;
+
+
+    normalizedMatrix.forEach((row, rowIndex) => {
+
+        const normalizedHeaders =
+            row.map(normalizeHeader);
+
+
+        let score = 0;
+
+
+        normalizedHeaders.forEach(header => {
+
+            if (
+                header &&
+                headerAliases.includes(header)
+            ) {
+                score++;
+            }
+
+        });
+
+
+        console.log(
+            `Excel Row ${rowIndex + 1} Header Score = ${score}`,
+            normalizedHeaders
+        );
+
+
+        if (score > bestScore) {
+
+            bestScore = score;
+            bestHeaderRow = rowIndex;
+        }
+
+    });
+
+
+    // ------------------------------------------------------
+    // Không tìm thấy Header
+    // ------------------------------------------------------
+    if (
+        bestHeaderRow === -1 ||
+        bestScore < 2
+    ) {
+
+        console.error(
+            'Không xác định được Header Excel.'
+        );
+
+        console.log(
+            'NORMALIZED MATRIX:',
+            normalizedMatrix
+        );
+
+        throw new Error(
+            'Không tìm thấy dòng tiêu đề Excel.'
+        );
+    }
+
+
+    console.log(
+        '=========================================='
+    );
+
+    console.log(
+        'HEADER ROW FOUND:',
+        bestHeaderRow + 1
+    );
+
+    console.log(
+        'HEADER SCORE:',
+        bestScore
+    );
+
+    console.log(
+        'RAW HEADER:',
+        normalizedMatrix[bestHeaderRow]
+    );
+
+    console.log(
+        'NORMALIZED HEADER:',
+        normalizedMatrix[bestHeaderRow]
+            .map(normalizeHeader)
+    );
+
+    console.log(
+        '=========================================='
+    );
+
+
+    // ------------------------------------------------------
+    // Trả kết quả
+    // ------------------------------------------------------
+    return {
+
+        matrix: normalizedMatrix,
+
+        headerRow: bestHeaderRow,
+
+        headers:
+            normalizedMatrix[bestHeaderRow]
+                .map(normalizeHeader)
+    };
+}
+
+function readImportedRows(matrix) {
+
+    if (!Array.isArray(matrix) || matrix.length === 0) {
+
+        throw new Error(
+            'Không có dữ liệu Excel.'
+        );
+    }
+
+
+    // =====================================================
+    // 1. DEBUG MATRIX
+    // =====================================================
+
+    console.log(
+        '========== MATRIX RECEIVED =========='
+    );
+
+    console.log(
+        'Total rows:',
+        matrix.length
+    );
+
+    console.log(
+        'First row:',
+        matrix[0]
+    );
+
+
+    // =====================================================
+    // 2. TÌM HEADER
+    // =====================================================
+
+    let headerRow = -1;
+
+
+    for (
+        let i = 0;
+        i < matrix.length;
+        i++
+    ) {
+
+        const row = matrix[i];
+
+
+        if (!Array.isArray(row)) {
+            continue;
+        }
+
+
+        const headers =
+            row.map(cleanExcelHeader);
+
+
+        console.log(
+            `ROW ${i + 1}:`,
+            headers
+        );
+
+
+        // ---------------------------------------------
+        // File thực tế có:
+        //
+        // JOB NO
+        // Release Key
+        // PO-NUMBER
+        // SKU
+        //
+        // Sau normalize:
+        //
+        // jobno
+        // releasekey
+        // ponumber
+        // sku
+        // ---------------------------------------------
+
+        const hasJob =
+            headers.includes('jobno');
+
+
+        const hasRelease =
+            headers.includes('releasekey');
+
+
+        const hasPO =
+            headers.includes('ponumber');
+
+
+        const hasSKU =
+            headers.includes('sku');
+
+
+        console.log(
+            `ROW ${i + 1} CHECK:`,
+            {
+                hasJob,
+                hasRelease,
+                hasPO,
+                hasSKU
+            }
+        );
+
+
+        // Chỉ cần tìm đủ 3/4
+        const score = [
+            hasJob,
+            hasRelease,
+            hasPO,
+            hasSKU
+        ]
+            .filter(Boolean)
+            .length;
+
+
+        if (score >= 3) {
+
+            headerRow = i;
+
+            break;
+        }
+
+    }
+
+
+    // =====================================================
+    // 3. KHÔNG TÌM THẤY HEADER
+    // =====================================================
+
+    if (headerRow === -1) {
+
+        console.error(
+            '========== HEADER NOT FOUND =========='
+        );
+
+
+        matrix
+            .slice(0, 10)
+            .forEach(
+                (row, index) => {
+
+                    console.log(
+                        `RAW ROW ${index + 1}:`,
+                        row
+                    );
+
+
+                    console.log(
+                        `CLEAN ROW ${index + 1}:`,
+                        Array.isArray(row)
+                            ? row.map(cleanExcelHeader)
+                            : row
+                    );
+
+                }
+            );
+
+
+        throw new Error(
+            'Không tìm thấy dòng tiêu đề Excel.'
+        );
+    }
+
+
+    // =====================================================
+    // 4. HEADER
+    // =====================================================
+
+    console.log(
+        '========== HEADER FOUND =========='
+    );
+
+
+    console.log(
+        'Header Excel Row:',
+        headerRow + 1
+    );
+
+
+    console.log(
+        'Raw Header:',
+        matrix[headerRow]
+    );
+
+
+    const headers =
+        matrix[headerRow]
+            .map(cleanExcelHeader);
+
+
+    console.log(
+        'Clean Header:',
+        headers
+    );
+
+
+    // =====================================================
+    // 5. HEADER INDEX
+    // =====================================================
+
+    const headerIndex = {};
+
+
+    headers.forEach(
+        (header, index) => {
+
+            if (
+                header &&
+                headerIndex[header] === undefined
+            ) {
+
+                headerIndex[header] =
+                    index;
+            }
+
+        }
+    );
+
+
+    console.log(
+        '========== HEADER INDEX =========='
+    );
+
+    console.log(
+        headerIndex
+    );
+
+
+    // =====================================================
+    // 6. MAPPING ĐÚNG THEO FILE
+    // =====================================================
+
+    const mapping = [
+        { field: 'jobno', headers: ['jobno', 'jobnumber'] },
+        { field: 'relese_key', headers: ['releasekey', 'releasekeyno', 'releasekeynumber'] },
+        { field: 'ponumber', headers: ['ponumber', 'pono'] },
+        { field: 'sku', headers: ['sku', 'skuno', 'skunumber', 'item', 'itemcode'] },
+        { field: 'finaldc', headers: ['tofinaldcid', 'finaldc', 'finaldcid'] },
+        { field: 'hubdc', headers: ['tohubdcid', 'hubdc', 'hubdcid'] },
+        { field: 'systempallet', headers: ['systempalletnumber', 'systempalletno', 'systempallet'] },
+        { field: 'measurement', headers: ['measurement', 'dimension', 'dimensions'] },
+        { field: 'weight', headers: ['gweight', 'grossweight', 'weight'] },
+        { field: 'cbm_pallet', headers: ['cbmpallet', 'cbmperpallet'] },
+        { field: 'cbm', headers: ['cbm', 'volume'] },
+        { field: 'carton', headers: ['ctn', 'carton', 'cartons', 'cartonqty'] },
+        { field: 'palletnumber', headers: ['palletnumber', 'palletno', 'pltnumber', 'pltno'] },
+        { field: 'cont', headers: ['cont', 'container', 'containerno', 'containernumber'] },
+        { field: 'seal', headers: ['seal', 'sealno', 'sealnumber'] }
+    ];
+
+
+    // =====================================================
+    // 7. CHECK CỘT
+    // =====================================================
+
+    console.log(
+        '========== COLUMN MAPPING =========='
+    );
+
+
+    mapping.forEach(({ field, headers: aliases }) => {
+        const excelColumn = aliases.find(alias => headerIndex[alias] !== undefined);
+        console.log(excelColumn || aliases[0], '=>', excelColumn === undefined ? undefined : headerIndex[excelColumn], '=>', field);
+    });
+
+
+    // =====================================================
+    // 8. LẤY DATA
+    // =====================================================
+
+    const dataRows =
+        matrix.slice(
+            headerRow + 1
+        );
+
+
+    const imported = [];
+
+
+    // =====================================================
+    // 9. CONVERT ROW
+    // =====================================================
+
+    dataRows.forEach(
+        (row, rowNumber) => {
+
+            if (!Array.isArray(row)) {
+                return;
+            }
+
+
+            const result = {};
+
+
+            mapping.forEach(({ field: targetField, headers: aliases }) => {
+                const excelColumn = aliases.find(alias => headerIndex[alias] !== undefined);
+                const columnIndex = excelColumn === undefined ? undefined : headerIndex[excelColumn];
+                let value = columnIndex === undefined ? null : row[columnIndex];
+
+                if (value && typeof value === 'object' && value.result !== undefined) {
+                    value = value.result;
+                }
+                if (value && typeof value === 'object' && Array.isArray(value.richText)) {
+                    value = value.richText.map(item => item.text ?? '').join('');
+                }
+                if (value && typeof value === 'object' && value.text !== undefined) {
+                    value = value.text;
+                }
+                if (value instanceof Date) {
+                    value = value.toISOString();
+                }
+                if (typeof value === 'string') {
+                    value = value.trim();
+                }
+                if (value === '' || value === undefined) {
+                    value = null;
+                }
+
+                result[targetField] = value;
+            });
+
+
+            // =================================================
+            // 10. BỎ DÒNG HOÀN TOÀN TRỐNG
+            // =================================================
+
+            const hasData =
+
+                result.jobno !== null ||
+
+                result.relese_key !== null ||
+
+                result.ponumber !== null ||
+
+                result.sku !== null;
+
+
+            if (!hasData) {
+
+                console.log(
+                    `Skip Excel Row ${
+                        headerRow +
+                        rowNumber +
+                        2
+                    }`
+                );
+
+                return;
+            }
+
+
+            imported.push(
+                result
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // 11. RESULT
+    // =====================================================
+
+    console.log(
+        '========== IMPORT RESULT =========='
+    );
+
+
+    console.log(
+        'Total:',
+        imported.length
+    );
+
+
+    console.table(
+        imported
+    );
+
+
+    if (
+        imported.length === 0
+    ) {
+
+        throw new Error(
+            'Không có dữ liệu Excel để Import.'
+        );
+    }
+
+
+    return imported;
+}
+
+
+      
+async function importExcel(file) {
+    if (!file) return;
+
+    const jobno = $('jobSelect').value.trim();
+    const shipmentorder = $('shipmentOrder').value.trim();
+
+    if (!jobno || !shipmentorder) {
+        throw new Error(
+            'Vui lòng chọn Job No và nhập Shipment Order trước khi import.'
+        );
+    }
+
+    // ==========================================
+    // Đọc Excel bằng ExcelJS
+    // ==========================================
+    const buffer = await file.arrayBuffer();
+
+    const workbook = new ExcelJS.Workbook();
+
+    await workbook.xlsx.load(buffer);
+
+    const worksheet = workbook.worksheets[0];
+
+    if (!worksheet) {
+        throw new Error('File Excel không có Sheet.');
+    }
+
+    console.log('Excel Sheet:', worksheet.name);
+
+    // ==========================================
+    // Chuyển Worksheet -> Matrix
+    // ==========================================
+    const matrix = [];
+
+    worksheet.eachRow(
+        { includeEmpty: true },
+        function(row) {
+
+            const values = [];
+
+            // ExcelJS bắt đầu column từ 1
+            for (
+                let col = 1;
+                col <= worksheet.columnCount;
+                col++
+            ) {
+
+                let value = row.getCell(col).value;
+
+                // Formula
+                if (
+                    value &&
+                    typeof value === 'object' &&
+                    value.result !== undefined
+                ) {
+                    value = value.result;
+                }
+
+                values.push(
+                    value ?? ''
+                );
+            }
+
+            matrix.push(values);
+        }
+    );
+
+    console.log('========== MATRIX ==========');
+    console.log(matrix);
+
+    // ==========================================
+    // Đọc dữ liệu
+    // ==========================================
+    const imported =
+        readImportedRows(matrix);
+
+    if (!imported.length) {
+        throw new Error(
+            'File Excel không có dòng dữ liệu.'
+        );
+    }
+
+    console.log('========== IMPORTED ==========');
+    console.table(imported);
+
+    // ==========================================
+    // Gửi Backend
+    // ==========================================
+    const payload = await getJson(
+        `${api}/api/updateclp/import`,
+        {
+            method: 'POST',
+
+            headers: {
+                'Content-Type':
+                    'application/json'
+            },
+
+            body: JSON.stringify({
+                connectionString,
+                jobno,
+                shipmentorder,
+                rows: imported
+            })
+        }
+    );
+
+    showNotice(
+        `Import thành công ${payload.imported ?? payload.inserted} dòng Excel${payload.loose ? ` và ${payload.loose} dòng loose carton` : ''}.`
+    );
+
+    await loadRows();
+}
+
+
+
+
+
+      async function loadJobs() { const date = $('exportDate').value; renderJobs([]); renderShipmentOrders([]); $('shipmentOrder').value = ''; rows = []; renderRows(); if (!date) return; try { const payload = await getJson(`${api}/api/updateclp/jobs?connectionString=${encodeURIComponent(connectionString)}&date=${encodeURIComponent(date)}`); renderJobs(payload.jobs || []); showNotice(`Đã tải ${payload.jobs.length} Job No.`); } catch (error) { showNotice(error.message, true); } }
+      async function loadShipmentOrders() {
+         const jobno = $('jobSelect').value.trim();
+
+  rows = [];
+  renderRows();
+
+  if (!jobno) return;
+
+  try {
+    const url =
+      `${api}/api/updateclp/shipment-orders` +
+      `?connectionString=${encodeURIComponent(connectionString)}` +
+      `&jobno=${encodeURIComponent(jobno)}`;
+
+    console.log('Loading:', url);
+
+    const payload = await getJson(url);
+
+    console.log('API:', payload);
+
+    rows = Array.isArray(payload.rows)
+      ? payload.rows
+      : [];
+
+    renderRows();
+
+    showNotice(
+      rows.length
+        ? `Đã tải ${rows.length} dòng cho Job No ${jobno}.`
+        : `Job No ${jobno} chưa có dữ liệu.`
+    );
+
+  } catch (error) {
+    console.error(error);
+    showNotice(error.message, true);
+  }
+}
+
+      async function loadRows() { const jobno = $('jobSelect').value; const shipmentorder = $('shipmentOrder').value.trim(); if (!jobno) return showNotice('Vui lòng chọn Job No.', true); try { const payload = await getJson(`${api}/api/updateclp/rows?connectionString=${encodeURIComponent(connectionString)}&jobno=${encodeURIComponent(jobno)}&shipmentorder=${encodeURIComponent(shipmentorder)}`); rows = payload.rows || []; renderRows(); showNotice(`Đã tải ${rows.length} dòng CLP.`); } catch (error) { showNotice(error.message, true); } }
+            async function exportPl() {
+              // =========================================================
+              // 1. GET JOB NO
+              // =========================================================
+              const jobno = $('jobSelect').value;
+
+              if (!jobno) {
+                return showNotice(
+                  'Vui lòng chọn Job No.',
+                  true
+                );
+              }
+
+              try {
+
+                // =======================================================
+                // 2. CHECK EXCELJS
+                // =======================================================
+                if (typeof ExcelJS === 'undefined') {
+                  throw new Error(
+                    'ExcelJS chưa được load. Hãy kiểm tra <script> ExcelJS trong HTML.'
+                  );
+                }
+
+                // =======================================================
+                // 3. GET DATA FROM API
+                // =======================================================
+                const payload = await getJson(
+                  `${api}/api/updateclp/export-data` +
+                  `?connectionString=${encodeURIComponent(connectionString)}` +
+                  `&jobno=${encodeURIComponent(jobno)}`
+                );
+
+                // =======================================================
+                // 4. CHECK DATA
+                // =======================================================
+                if (
+                  !payload ||
+                  !Array.isArray(payload.rows) ||
+                  payload.rows.length === 0
+                ) {
+                  return showNotice(
+                    'Không có dữ liệu export cho Job No này.',
+                    true
+                  );
+                }
+
+                // Nếu API không trả detail thì dùng array rỗng
+                const detailRows =
+                  Array.isArray(payload.detail)
+                    ? payload.detail
+                    : [];
+
+
+                // =======================================================
+                // 5. HELPER VALUE
+                //
+                // Đặt ngay trong exportPl()
+                // nên chắc chắn không bị:
+                // "value is not defined"
+                // =======================================================
+                const value = (
+                  row,
+                  key,
+                  fallback = ''
+                ) => {
+
+                  if (
+                    row &&
+                    row[key] !== undefined &&
+                    row[key] !== null
+                  ) {
+                    return row[key];
+                  }
+
+                  return fallback;
+                };
+
+
+                // =======================================================
+                // 6. FIRST ROW
+                // =======================================================
+                const first =
+                  payload.rows[0];
+
+
+                // =======================================================
+                // 7. LOAD TEMPLATE
+                // =======================================================
+                const templateResponse =
+                  await fetch(
+                    'templates/托盘明细.xlsx'
+                  );
+
+                if (!templateResponse.ok) {
+                  throw new Error(
+                    'Không thể tải template 托盘明细.xlsx.'
+                  );
+                }
+
+                const templateBuffer =
+                  await templateResponse.arrayBuffer();
+
+
+                // =======================================================
+                // 8. CREATE EXCELJS WORKBOOK
+                // =======================================================
+                const workbook =
+                  new ExcelJS.Workbook();
+
+
+                // =======================================================
+                // 9. LOAD TEMPLATE
+                // =======================================================
+                await workbook.xlsx.load(
+                  templateBuffer
+                );
+
+
+                // =======================================================
+                // 10. GET DC035
+                // =======================================================
+                let worksheet =
+                  workbook.getWorksheet(
+                    'DC035'
+                  );
+
+                if (!worksheet) {
+                  worksheet =
+                    workbook.worksheets[0];
+                }
+
+                if (!worksheet) {
+                  throw new Error(
+                    'Không tìm thấy worksheet DC035.'
+                  );
+                }
+
+
+                // =======================================================
+                // 11. GET DETAIL SHEET
+                // =======================================================
+                let detailSheet =
+                  workbook.getWorksheet(
+                    'Detail'
+                  );
+
+                if (!detailSheet) {
+
+                  detailSheet =
+                    workbook.addWorksheet(
+                      'Detail'
+                    );
+                }
+
+
+                // =======================================================
+                // 12. DATE CONVERSION
+                // =======================================================
+                const toExcelDate = (
+                  dateValue
+                ) => {
+
+                  if (!dateValue) {
+                    return '';
+                  }
+
+                  const dateText =
+                    String(dateValue)
+                      .slice(0, 10);
+
+                  const match =
+                    dateText.match(
+                      /^(\d{4})-(\d{2})-(\d{2})$/
+                    );
+
+                  if (!match) {
+                    return '';
+                  }
+
+                  const year =
+                    Number(match[1]);
+
+                  const month =
+                    Number(match[2]);
+
+                  const day =
+                    Number(match[3]);
+
+                  return new Date(
+                    year,
+                    month - 1,
+                    day
+                  );
+                };
+
+
+                // =======================================================
+                // 13. HEADER
+                // =======================================================
+
+                worksheet.getCell(
+                  'A1'
+                ).value =
+                  `SPR ORDER ${value(
+                    first,
+                    'shipmentorder'
+                  )}`;
+
+
+                worksheet.getCell(
+                  'G3'
+                ).value =
+                  value(
+                    first,
+                    'cont'
+                  );
+
+
+                worksheet.getCell(
+                  'G4'
+                ).value =
+                  value(
+                    first,
+                    'seal'
+                  );
+
+
+                const outboundDate = (() => {
+                  const rawDate =
+                    value(
+                      first,
+                      'outbound_datestuff'
+                    );
+                  return rawDate ? new Intl.DateTimeFormat('en-CA', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    timeZone: 'Asia/Ho_Chi_Minh',
+                  }).format(new Date(rawDate)) : '';
+                  const y=parts.find(p => p.type ==='year')?.value;
+                  const m=parts.find(p => p.type ==='month')?.value;
+                  const d=parts.find(p => p.type ==='day')?.value;
+                  return toExcelDate(`${d}-${m}-${y}`);
+                })();
+                  
+
+
+                worksheet.getCell(
+                  'M7'
+                ).value =
+                  outboundDate;
+
+
+                worksheet.getCell(
+                  'M7'
+                ).numFmt =
+                  'dd/mm/yyyy';
+                worksheet.getCell('M7').font={...worksheet.getCell('M7').font, bold:true};
+
+                // =======================================================
+                // 14. DATA START ROW
+                // =======================================================
+                const startRow = 11;
+
+
+                // =======================================================
+                // 15. WRITE PALLET DATA
+                // =======================================================
+
+                payload.rows.forEach(
+                  (
+                    row,
+                    index
+                  ) => {
+
+                    const excelRow =
+                      startRow +
+                      index;
+
+
+                    // Pallet Number
+                    const palletNumber =
+                      String(
+                        value(
+                          row,
+                          'palletnumber'
+                        )
+                      ).trim();
+
+
+                    // A - Job No
+                    worksheet.getCell(
+                      `A${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'jobno'
+                      );
+
+
+                    // B - Release Key
+                    worksheet.getCell(
+                      `B${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'release_key',
+                        value(
+                          row,
+                          'relese_key'
+                        )
+                      );
+
+
+                    // C - PO Number
+                    worksheet.getCell(
+                      `C${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'ponumber'
+                      );
+
+
+                    // D - SKU
+                    worksheet.getCell(
+                      `D${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'sku'
+                      );
+
+
+                    // E - Final DC
+                    worksheet.getCell(
+                      `E${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'finaldc'
+                      );
+
+
+                    // F - Hub DC
+                    worksheet.getCell(
+                      `F${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'hubdc'
+                      );
+
+
+                    // G - System Pallet
+                    worksheet.getCell(
+                      `G${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'systempallet'
+                      );
+
+
+                    // H - Measurement
+                    worksheet.getCell(
+                      `H${excelRow}`
+                    ).value =
+                      value(
+                        row,
+                        'measurement'
+                      );
+
+
+                    // I - Weight
+                    worksheet.getCell(
+                      `I${excelRow}`
+                    ).value =
+                      Number(
+                        value(
+                          row,
+                          'weight',
+                          ''
+                        )
+                      );
+
+
+                    // J - CBM Pallet
+                    worksheet.getCell(
+                      `J${excelRow}`
+                    ).value =
+                      Number(
+                        value(
+                          row,
+                          'cbm_pallet',
+                          ''
+                        )
+                      );
+
+
+                    // K - Carton
+                    worksheet.getCell(
+                      `K${excelRow}`
+                    ).value =
+                      Number(
+                        value(
+                          row,
+                          'carton',
+                          0
+                        )
+                      );
+
+
+                    // L - Pallet Number
+                    worksheet.getCell(
+                      `L${excelRow}`
+                    ).value =
+                      palletNumber;
+
+
+                    // M - Pallet Count
+                    worksheet.getCell(
+                      `M${excelRow}`
+                    ).value =
+                      palletNumber.length > 0
+                        ? 1
+                        : '';
+
+
+                    // N - CBM
+                 worksheet.getCell(`N${excelRow}`).value =
+                    Number(value(row, 'cbm', 0));
+
+                  worksheet.getCell(`N${excelRow}`).numFmt = '0.000'; } );
+                     
+                
+
+                // =======================================================
+                // 16. TOTAL ROW
+                // =======================================================
+
+                const lastRow =
+                  startRow +
+                  payload.rows.length -
+                  1;
+
+                const totalRow =
+                  lastRow + 1;
+
+
+                // A = TOTAL
+                worksheet.getCell(
+                  `A${totalRow}`
+                ).value =
+                  'TOTAL';
+                
+                // -------------------------------------------------------
+                // Total CBM Pallet
+                // -------------------------------------------------------
+
+                const totalCbmPallet =
+                  payload.rows.reduce(
+                    (
+                      total,
+                      row
+                    ) => {
+                      return (
+                        total +
+                        Number(
+                          row.cbm_pallet || 0
+                        )
+                      );
+                    },
+                    0
+                  );
+
+
+                worksheet.getCell(
+                  `J${totalRow}`
+                ).value = {
+                  formula:
+                    `SUM(J${startRow}:J${lastRow})`,
+                  result:
+                    Number(totalCbmPallet.toFixed(3))
+                };
+
+
+                // -------------------------------------------------------
+                // Total Carton
+                // -------------------------------------------------------
+
+                const totalCarton =
+                  payload.rows.reduce(
+                    (
+                      total,
+                      row
+                    ) => {
+                      return (
+                        total +
+                        Number(
+                          row.carton || 0
+                        )
+                      );
+                    },
+                    0
+                  );
+
+
+                worksheet.getCell(
+                  `K${totalRow}`
+                ).value = {
+                  formula:
+                    `SUM(K${startRow}:K${lastRow})`,
+                  result:
+                    totalCarton
+                };
+
+
+                // -------------------------------------------------------
+                // Total CBM
+                // -------------------------------------------------------
+
+                const totalCbm =
+                  payload.rows.reduce(
+                    (
+                      total,
+                      row
+                    ) => {
+                      return (
+                        total +
+                        Number(
+                          row.cbm || 0
+                        )
+                      );
+                    },
+                    0
+                  );
+
+
+                worksheet.getCell(
+                  `N${totalRow}`
+                ).value = {
+                  formula:
+                    `SUM(N${startRow}:N${lastRow})`,
+                  result:
+                    Number(totalCbm.toFixed(3))
+                };
+
+                
+                // =======================================================
+                // 17. DETAIL HEADER
+                // =======================================================
+
+                detailSheet.getCell(
+                  'A1'
+                ).value =
+                  'Jobno_type';
+
+                detailSheet.getCell(
+                  'B1'
+                ).value =
+                  'SKU';
+
+                detailSheet.getCell(
+                  'C1'
+                ).value =
+                  'Carton';
+
+                detailSheet.getCell(
+                  'D1'
+                ).value =
+                  'Lenght';
+
+                detailSheet.getCell(
+                  'E1'
+                ).value =
+                  'Width';
+
+                detailSheet.getCell(
+                  'F1'
+                ).value =
+                  'CBM';
+
+
+                // =======================================================
+                // 18. WRITE DETAIL
+                // =======================================================
+
+                detailRows.forEach(
+                  (
+                    row,
+                    index
+                  ) => {
+
+                    const excelRow =
+                      index + 2;
+
+
+                    detailSheet.getCell(
+                      `A${excelRow}`
+                    ).value =
+                      row.jobno_type || '';
+
+
+                    detailSheet.getCell(
+                      `B${excelRow}`
+                    ).value =
+                      row.sku || '';
+
+
+                    detailSheet.getCell(
+                      `C${excelRow}`
+                    ).value =
+                      Number(
+                        row.carton || 0
+                      );
+
+
+                    detailSheet.getCell(
+                      `D${excelRow}`
+                    ).value =
+                      Number(
+                        row.length || 0
+                      );
+
+
+                    detailSheet.getCell(
+                      `E${excelRow}`
+                    ).value =
+                      Number(
+                        row.width || 0
+                      );
+
+
+                    detailSheet.getCell(
+                      `F${excelRow}`
+                    ).value =
+                      Number(
+                        row.cbm || 0
+                      );
+                  }
+                );
+
+
+                // =======================================================
+                // 19. DETAIL CARTON TOTAL -> O11
+                // =======================================================
+
+                const detailLastRow =
+                  detailRows.length + 1;
+
+
+                const totalDetailCarton =
+                  detailRows.reduce(
+                    (
+                      total,
+                      row
+                    ) => {
+                      return (
+                        total +
+                        Number(
+                          row.carton || 0
+                        )
+                      );
+                    },
+                    0
+                  );
+
+
+                if (
+                  detailRows.length > 0
+                ) {
+
+                  worksheet.getCell(
+                    'O11'
+                  ).value = {
+                    formula:
+                      `SUM(Detail!C2:C${detailLastRow})`,
+                    result:
+                      totalDetailCarton
+                  };
+
+                } else {
+
+                  worksheet.getCell(
+                    'O11'
+                  ).value = 0;
+                }
+
+
+                // =======================================================
+                // 20. FILE NAME
+                // =======================================================
+
+                const jobnoShp =
+                  String(
+                    first.jobno_shp || ''
+                  ).trim();
+
+
+                const outboundDateText =first.outbound_datestuff ?new Intl.DateTimeFormat('en-CA',{
+                  timeZone: 'Asia/Ho_Chi_Minh',
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                }).format(new Date(first.outbound_datestuff)) : ''; 
+                               
+
+
+                const finaldc =
+                  first.finaldc || '';
+
+
+                const filename =
+                  `托盘明细_${jobnoShp}_${outboundDateText}_${finaldc}.xlsx`;
+
+
+                // =======================================================
+                // 21. GENERATE FILE
+                // =======================================================
+
+                const outputBuffer =
+                  await workbook.xlsx.writeBuffer();
+
+
+                // =======================================================
+                // 22. DOWNLOAD FILE
+                // =======================================================
+
+                const blob =
+                  new Blob(
+                    [outputBuffer],
+                    {
+                      type:
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                  );
+
+
+                const url =
+                  URL.createObjectURL(
+                    blob
+                  );
+
+
+                const link =
+                  document.createElement(
+                    'a'
+                  );
+
+
+                link.href =
+                  url;
+
+                link.download =
+                  filename;
+
+
+                document.body.appendChild(
+                  link
+                );
+
+
+                link.click();
+
+
+                document.body.removeChild(
+                  link
+                );
+
+
+                URL.revokeObjectURL(
+                  url
+                );
+
+
+                // =======================================================
+                // 23. SUCCESS
+                // =======================================================
+
+                showNotice(
+                  `Đã export ${payload.rows.length} dòng ` +
+                  `và ${detailRows.length} dòng Detail.`
+                );
+
+
+              } catch (error) {
+
+                console.error(
+                  'EXPORT PL ERROR:',
+                  error
+                );
+
+                showNotice(
+                  error.message ||
+                  'Có lỗi khi export Excel.',
+                  true
+                );
+              }
+            }
+
+
+   
+          async function exportEdi() {
+              const jobno = $('jobSelect').value.trim();
+
+              if (!jobno) {
+                return showNotice('Vui lòng chọn Job No.', true);
+              }
+
+              try {
+                // ============================================================
+                // 1. LẤY DATA TỪ API
+                // ============================================================
+                const payload = await getJson(
+                  `${api}/api/updateclp/export-data` +
+                  `?connectionString=${encodeURIComponent(connectionString)}` +
+                  `&jobno=${encodeURIComponent(jobno)}`
+                );
+
+                if (!payload || !Array.isArray(payload.rows) || !payload.rows.length) {
+                  return showNotice(
+                    'Không có dữ liệu export cho Job No này.',
+                    true
+                  );
+                }
+
+                // ============================================================
+                // 2. LOAD TEMPLATE BẰNG EXCELJS
+                //    Không tạo workbook mới
+                //    Mở trực tiếp template để giữ nguyên format
+                // ============================================================
+                const templateResponse = await fetch(
+                  'templates/clp_export_container_template.xlsx'
+                );
+
+                if (!templateResponse.ok) {
+                  throw new Error(
+                    'Không thể tải template clp_export_container_template.xlsx.'
+                  );
+                }
+
+                const templateBuffer = await templateResponse.arrayBuffer();
+
+                const workbook = new ExcelJS.Workbook();
+
+                await workbook.xlsx.load(templateBuffer);
+
+                // ============================================================
+                // 3. LẤY WORKSHEET ĐẦU TIÊN
+                // ============================================================
+                const worksheet = workbook.worksheets[0];
+
+                if (!worksheet) {
+                  throw new Error('Template không có worksheet.');
+                }
+
+                // ============================================================
+                // 4. GROUP THEO SYSTEM PALLET
+                //    Giữ nguyên logic của code cũ
+                // ============================================================
+                const groupedMap = new Map();
+
+                payload.rows
+                  .filter(row => String(row.systempallet ?? '').trim())
+                  .forEach(row => {
+                    const systemPallet = String(
+                      row.systempallet ?? ''
+                    ).trim();
+
+                    if (!groupedMap.has(systemPallet)) {
+                      groupedMap.set(systemPallet, row);
+                    }
+                  });
+
+                const groupedRows = [...groupedMap.values()];
+
+                if (!groupedRows.length) {
+                  return showNotice(
+                    'Không có System Pallet để export EDI.',
+                    true
+                  );
+                }
+
+            // ============================================================
+            // 5. GHI DATA VÀO TEMPLATE
+            //
+            // A = Container
+            // B = System Pallet
+            // C = 1
+            //
+            // Chỉ thay VALUE.
+            // Không thay style / border / font / fill / alignment
+            // của template.
+            // ============================================================
+            groupedRows.forEach((row, index) => {
+              const excelRow = index + 2;
+
+              const container = String(
+                row.cont ?? ''
+              ).trim();
+
+              const systemPallet = String(
+                row.systempallet ?? ''
+              ).trim();
+
+              worksheet.getCell(`A${excelRow}`).value = container;
+              worksheet.getCell(`B${excelRow}`).value = systemPallet;
+              worksheet.getCell(`C${excelRow}`).value = 1;
+            });
+
+            // ============================================================
+            // 6. XÓA DATA CŨ TRONG TEMPLATE
+            //
+            // Nếu template có sẵn nhiều dòng dữ liệu mẫu,
+            // xóa VALUE nhưng giữ nguyên FORMAT.
+            //
+            // Ví dụ template có tới dòng 1000.
+            // Chỉ giữ lại số dòng cần export.
+            // ============================================================
+            const firstDataRow = 2;
+            const lastRequiredRow =
+              firstDataRow + groupedRows.length - 1;
+
+            const maxTemplateRows = worksheet.rowCount;
+
+            for (
+              let rowNumber = lastRequiredRow + 1;
+              rowNumber <= maxTemplateRows;
+              rowNumber++
+            ) {
+              worksheet.getCell(`A${rowNumber}`).value = null;
+              worksheet.getCell(`B${rowNumber}`).value = null;
+              worksheet.getCell(`C${rowNumber}`).value = null;
+            }
+
+            // ============================================================
+            // 7. LẤY THÔNG TIN FILE NAME
+            // ============================================================
+            const first = payload.rows[0];
+
+            const jobnoShp = String(
+              first.jobno_shp || jobno
+            ).trim();
+
+            const stuffingDate = String(
+              first.outbound_datestuff || ''
+            ).slice(0, 10);
+
+            // ============================================================
+            // 8. TẠO FILE EXCEL
+            // ============================================================
+            const outputBuffer =
+              await workbook.xlsx.writeBuffer();
+
+            // ============================================================
+            // 9. DOWNLOAD FILE
+            // ============================================================
+            const blob = new Blob(
+              [outputBuffer],
+              {
+                type:
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              }
+            );
+
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+
+            link.href = url;
+
+            link.download =
+              `EDI_${jobnoShp}_${stuffingDate}.xlsx`;
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+
+            // ============================================================
+            // 10. THÔNG BÁO
+            // ============================================================
+            showNotice(
+              `Đã export EDI ${groupedRows.length} System Pallet.`
+            );
+
+          } catch (error) {
+            console.error('exportEdi ERROR:', error);
+
+            showNotice(
+              error?.message ||
+              'Có lỗi khi export EDI.',
+              true
+            );
+          }
+        }
+
+
+    </script>
+  
+  </body>
+</html>

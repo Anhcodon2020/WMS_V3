@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Outbound</title>
+    
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+      :root { --panel:#fff; --border:#dfe7f5; --text:#14213d; --muted:#5b6b8a; --primary:#2563eb; }
+      * { box-sizing:border-box; } body { margin:0; color:var(--text); font-family:Inter,'Segoe UI',Arial,sans-serif; background:linear-gradient(180deg,#edf4ff,#f8fafc); }
+      .shell { display:flex; min-height:100vh; } aside { width:240px; padding:22px 16px; color:#e2e8f0; background:linear-gradient(180deg,#101c38,#16284a); }.brand { display:flex; align-items:center; gap:12px; padding:8px 10px 18px; border-bottom:1px solid #ffffff2e; font-weight:700; }.brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:#2563eb; } nav { display:grid; gap:8px; margin-top:18px; } nav a { padding:11px 12px; border-radius:12px; color:#dfeafc; text-decoration:none; font-weight:600; } nav a.active,nav a:hover { color:#fff; background:#60a5fa2e; }
+      main { flex:1; padding:30px 24px 40px; min-width:0; }.page { max-width:1400px; margin:auto; }.topbar,.card-header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; } h1,h2 { margin:0; } h1 { font-size:2rem; } h2 { font-size:1.15rem; }.muted { color:var(--muted); }.card { margin-top:20px; padding:20px; border:1px solid var(--border); border-radius:16px; background:var(--panel); box-shadow:0 10px 30px #0f172a14; }
+      button { border:0; border-radius:9px; padding:10px 14px; cursor:pointer; font-weight:700; }.primary { color:#fff; background:linear-gradient(135deg,#2563eb,#1d4ed8); }.ghost { color:var(--text); background:#edf2ff; }.danger { color:#fff; background:#b91c1c; }.tabs { display:flex; gap:8px; border-bottom:1px solid var(--border); }.tab { border-radius:9px 9px 0 0; background:transparent; color:var(--muted); }.tab.active { color:var(--primary); background:#eff6ff; }.form-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:16px; align-items:end; } label { display:grid; gap:7px; color:var(--muted); font-size:.88rem; font-weight:600; } input { width:100%; padding:10px 11px; border:1px solid var(--border); border-radius:9px; color:var(--text); background:#f8fafc; }.kpi-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:16px; }.kpi { padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:#f8fafc; }.kpi .value { margin-top:4px; font-size:1.5rem; font-weight:800; }.table-wrap { overflow:auto; margin-top:16px; } table { width:100%; min-width:1080px; border-collapse:collapse; } th,td { padding:11px 9px; text-align:left; border-bottom:1px solid #edf2f7; white-space:nowrap; } th { color:var(--muted); background:#f8fafc; font-size:.78rem; text-transform:uppercase; }.notice { margin-top:14px; padding:10px 12px; border-radius:9px; background:#fef2f2; color:#b91c1c; }
+      .jobno-in-scanfile { background:#dcfce7; color:#166534; font-weight:700; }
+      @media (max-width:900px) { aside { display:none; } main { padding:20px 14px; }.kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+      @media (max-width:560px) { .kpi-grid { grid-template-columns:1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside><div class="brand"><div class="brand-mark">W</div><span>WMS Hub</span></div><nav aria-label="Main navigation"><a href="index.html" target="_blank" rel="noopener noreferrer">📦 Inbound</a><a href="masterdata.html" target="_blank" rel="noopener noreferrer">🧾 Masterdata</a><a href="supplier.html" target="_blank" rel="noopener noreferrer">🏢 Nhà cung cấp</a><a class="active" href="outbound.html" target="_blank" rel="noopener noreferrer">🚚 Outbound</a><a href="outbound_product.html" target="_blank" rel="noopener noreferrer">📋 Outbound product</a><a href="dso.html" target="_blank" rel="noopener noreferrer">📥 DSO</a><a href="release.html" target="_blank" rel="noopener noreferrer">📤 Release</a><a href="allowcate.html" target="_blank" rel="noopener noreferrer">📊 Allocation Dashboard</a><a href="pickinglist.html" target="_blank" rel="noopener noreferrer">📋 Picking List</a><a href="updatescan.html" target="_blank" rel="noopener noreferrer">🔎 Update scan</a><a href="inventory.html" target="_blank" rel="noopener noreferrer">📦 Inventory</a><a href="transaction.html" target="_blank" rel="noopener noreferrer">🔁 Transaction</a><a href="bbrreport.html" target="_blank" rel="noopener noreferrer">📊 BBR Report</a><a href="updateloc.html" target="_blank" rel="noopener noreferrer">📍 Update location</a></nav></aside>
+      <main><div class="page">
+        <header class="topbar"><div><p class="muted">Warehouse Management System</p><h1>Outbound</h1></div><button class="ghost" id="refreshBtn" type="button">Làm mới</button></header>
+        <section class="card">
+          <div class="card-header"><h2>Cập nhật Job No</h2><span class="muted">Container được kiểm tra theo ISO 6346</span></div>
+          <form id="jobForm" class="form-grid">
+            <label>Job No hiện tại<input id="jobnoInput" readonly required></label>
+            <label>Job No mới<input id="newJobnoInput" required></label>
+            <label>Số container<input id="containerInput" maxlength="11" placeholder="ABCD1234567"></label>
+            <label>Seal<input id="sealInput"></label>
+            <label>Ngày stuffing<input id="datestuffInput" type="date"></label>
+            <label>Plan Date<input id="planDateInput" type="date"></label>
+            <div><button class="primary" type="submit">Lưu cập nhật</button></div>
+          </form>
+        </section>
+        <section class="card">
+          <div class="card-header"><h2>Xuất báo cáo outbound</h2><span class="muted">Chọn khoảng ngày đóng hàng cho từng báo cáo</span></div>
+          <form id="containerExportForm" class="form-grid">
+            <label>Từ ngày<input id="containerExportFrom" type="date" required></label>
+            <label>Đến ngày<input id="containerExportTo" type="date" required></label>
+            <div><button class="primary" type="submit">Xuất theo container</button></div>
+          </form>
+          <form id="chipboardExportForm" class="form-grid">
+            <label>Từ ngày<input id="chipboardExportFrom" type="date" required></label>
+            <label>Đến ngày<input id="chipboardExportTo" type="date" required></label>
+            <div><button class="primary" type="submit">Xuất chipboard</button></div>
+          </form>
+        </section>
+        <section class="card">
+          <div class="card-header"><h2>Thống kê outbound theo Job No</h2><span class="muted">Tổng carton và CBM theo Job No</span></div>
+          <div class="kpi-grid"><div class="kpi"><div class="muted">Số cont đóng hàng hôm nay</div><div class="value" id="todayContainerCount">0</div></div><div class="kpi"><div class="muted">Số cont đóng hàng tuần này</div><div class="value" id="weekContainerCount">0</div></div><div class="kpi"><div class="muted">Filling rate tuần này (CBM/cont)</div><div class="value" id="fillingRate">0.000</div></div><div class="kpi"><div class="muted">Tổng CBM Job No chưa có cont</div><div class="value" id="withoutContainerCbm">0.000</div></div><div class="kpi"><div class="muted">Tổng CBM tuần trước</div><div class="value" id="lastWeekCbm">0.000</div></div><div class="kpi"><div class="muted">Filling rate tuần trước (CBM/cont)</div><div class="value" id="lastWeekFillingRate">0.000</div></div></div>
+          <div class="form-grid"><label>Tìm Job No<input id="searchJobnoInput" placeholder="Nhập Job No..."></label></div>
+          <div class="tabs"><button class="tab active" data-tab="withContainer" type="button">Đã có container (<span id="withContainerCount">0</span>)</button><button class="tab" data-tab="withoutContainer" type="button">Chưa có container (<span id="withoutContainerCount">0</span>)</button></div>
+          <div id="notice" class="notice" hidden></div>
+          <div class="table-wrap"><table><thead><tr><th>Job No</th><th>Ngày nhận</th><th>Container</th><th>Seal</th><th>Ngày đóng hàng</th><th>Kế hoạch đóng hàng</th><th>Tổng carton</th><th>Tổng CBM</th><th>Thao tác</th></tr></thead><tbody id="outboundBody"></tbody></table></div>
+        </section>
+      </div></main>
+    </div>
+    <script>
+      const connectionString = 'mysql://avnadmin:AVNS_AraAS98ikzoAR525_zc@mysql-11e2afba-nguyenanhtam2002-cec1.f.aivencloud.com:21065/wms_db?ssl-mode=REQUIRED';
+      const api = 'http://localhost:3005';
+      const $ = id => document.getElementById(id);
+      let rows = []; let activeTab = 'withContainer';
+      function number(value) { const result = Number(value); return Number.isFinite(result) ? result : 0; }
+      function dateOnly(value) { return value ? String(value).slice(0, 10) : ''; }
+      function getTodayGmt7() { const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); const values = Object.fromEntries(parts.map(part => [part.type, part.value])); return `${values.year}-${values.month}-${values.day}`; }
+      function getWeekStartGmt7() { const today = getTodayGmt7(); const date = new Date(`${today}T00:00:00Z`); const day = date.getUTCDay() || 7; date.setUTCDate(date.getUTCDate() - day + 1); return date.toISOString().slice(0, 10); }
+      function shiftIsoDate(value, days) { const date = new Date(`${value}T00:00:00Z`); date.setUTCDate(date.getUTCDate() + days); return date.toISOString().slice(0, 10); }
+      function showError(message) { $('notice').hidden = false; $('notice').textContent = message; }
+      function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
+      function printContainerStuffing(row) {
+        const printWindow = window.open('', '_blank', 'width=1200,height=850');
+        if (!printWindow) return showError('Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup rồi thử lại.');
+        const fields = [
+          ['Job No', row.jobno],
+          ['Ngày đóng hàng', dateOnly(row.datestuff)],
+          ['Container', row.container],
+          ['Seal', row.seal],
+          ['Plan Date', dateOnly(row.plan_date)]
+        ];
+        const fdcHeaders = String(row.fdc || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 4);
+        while (fdcHeaders.length < 4) fdcHeaders.push('');
+        const fdcSummary = Array.isArray(row.fdcSummary) ? row.fdcSummary : [];
+        const fdcSummaryByCode = fdcSummary.reduce((groups, item) => {
+          const fdc = String(item.fdc || '').trim();
+          if (fdc) (groups[fdc] ||= []).push(item);
+          return groups;
+        }, {});
+        const fdcCards = fdcHeaders.map(header => {
+          const summary = (fdcSummaryByCode[header] || []).map(item => `${escapeHtml(item.pallet_count)} pallet ${escapeHtml(item.pallet_type)}`).join(', ');
+          return `<div class="fdc-item"><span class="fdc-label">${header ? `FDC ${escapeHtml(header)}` : 'FDC'}</span><div class="fdc-line">${summary || '&nbsp;'}</div></div>`;
+        }).join('');
+        const detailRows = Array.from({ length: 12 }, (_, index) => `<tr><td>${index + 1}</td><td></td><td></td><td></td></tr>`).join('');
+       
+        const inspectionRows = items => items.map((item, index) => `<tr><td>${index + 1}</td><td>${item}</td><td>□</td><td>□</td><td></td></tr>`).join('');
+        printWindow.document.write(`<!doctype html><html lang="vi"><head><meta charset="UTF-8"><title>Container Stuffing Detail - ${escapeHtml(row.jobno)}</title><style>
+          @page stuffing { size: A4 landscape; margin: 10mm; }
+          @page inspection { size: A4 portrait; margin: 10mm; }
+          * { box-sizing: border-box; }
+          body { margin: 0; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
+          .sheet { width: 100%; }
+          .stuffing-page { page: stuffing; }
+          .inspection-page { page: inspection; page-break-before: always; padding: 0; font-size: 10px; }
+          .inspection-report { width: 100%; border: 1.5px solid #111; }
+          .inspection-company { padding: 4px; border-bottom: 1px solid #111; text-align: center; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+          .inspection-title { padding: 4px; border-bottom: 1px solid #111; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+          .inspection-code { padding: 3px 7px; text-align: right; font-size: 8px; font-weight: 700; }
+          .inspection-section { margin-top: 7px; border: 1px solid #111; }
+          .inspection-section-title { padding: 4px 6px; border-bottom: 1px solid #111; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+          .inspection-info { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+          .inspection-info div { min-height: 25px; padding: 4px 6px; border-right: 1px solid #111; border-bottom: 1px solid #111; }
+          .inspection-info div:nth-child(3n) { border-right: 0; }
+          .inspection-info strong { display: inline-block; min-width: 82px; }
+          .inspection-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+          .inspection-table th, .inspection-table td { min-height: 22px; padding: 4px 5px; border: 1px solid #111; }
+          .inspection-table th { text-align: center; font-weight: 700; }
+          .inspection-table th:first-child, .inspection-table td:first-child { width: 22px; text-align: center; }
+          .inspection-table th:nth-child(3), .inspection-table th:nth-child(4), .inspection-table td:nth-child(3), .inspection-table td:nth-child(4) { width: 46px; text-align: center; }
+          .inspection-table th:last-child, .inspection-table td:last-child { width: 96px; }
+          .inspection-table1 {width: 100%; border-collapse: collapse; table-layout: fixed; }
+          .inspection-table1 th, .inspection-table1 td { min-height: 22px; padding: 4px 5px; border: 1px solid #111; }
+          .inspection-table1 th { text-align: center; font-weight: 700; }
+          .inspection-table1 th:first-child, .inspection-table1 td:first-child { width: 22px; text-align: center; }
+          .inspection-table1 th:nth-child(3), .inspection-table1 th:nth-child(4), .inspection-table1 td:nth-child(3), .inspection-table1 td:nth-child(4) { width: 46px; text-align: center; }
+          .inspection-table1 th:last-child, .inspection-table1 td:last-child { width: 96px; }
+          .inspection-table1 .col-date {width:18%}
+          .inspection-table1 .col-time {width: 12%}
+          .inspection-table1 .col-jobno {width: 20%}
+          .inspection-table1 .col-quantity {width: 25%}
+          .inspection-table1 .col-boxes {width: 25%}
+          .inspection-notes { height: 48px; }
+          .inspection-signatures { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #111; }
+          .inspection-signature { height: 48px; padding: 5px; border-right: 1px solid #111; text-align: center; }
+          .inspection-signature:last-child { border-right: 0; }
+          .inspection-signature strong { display: block; margin-top: 48px; }
+          .header { display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; border-bottom: 2px solid #111; padding-bottom: 9px; }
+          .header {
+                display: grid;
+                grid-template-columns: 150px 1fr 150px;
+                align-items: center;
+                border-bottom: 2px solid #000;
+                padding: 10px 15px;
+            }
+           .logo { display: flex; align-items: center; justify-content: flex-start; }
+          .logo img { max-width: 120px; max-height: 60px; object-fit: contain; }
+          .check-box { border: 1px solid #000; width: 20px; height: 20px; display: inline-block; font-size: 10px; line-height: 20px; font-weight: bold; }
+          .title { text-align: center; }
+          .title h1 { margin: 0; font-size: 22px; letter-spacing: .4px; }
+          .title p { margin: 5px 0 0; font-size: 12px; }
+          .document-code { align-self: start; padding-top: 5px; text-align: right; font-size: 11px; color: #555; }
+          .info { display: grid; grid-template-columns: 1fr 1fr; gap: 0 34px; margin: 12px 0 11px; }
+          .info-item { display: grid; grid-template-columns: 125px 1fr; min-height: 25px; border-bottom: 1px solid #111; align-items: end; padding-bottom: 4px; }
+          .info-label { font-weight: 700; }
+          .fdc-heading { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #111; margin-bottom: 10px; }
+          .fdc-item { min-height: 37px; padding: 6px 8px; border-right: 1px solid #111; }
+          .fdc-item:last-child { border-right: 0; }
+          .fdc-label { display: block; font-weight: 700; margin-bottom: 5px; }
+          .fdc-line { min-height: 17px; border-bottom: 1px solid #111; line-height: 17px; }
+          .details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+          .detail-panel { min-width: 0; }
+          .container-photo { text-align: right; font-size: 12px;padding:0 !important;white-space: nowrap; }
+          .detail-title { margin: 0; padding: 7px 8px; border: 1px solid #111; border-bottom: 0; text-align: center; font-size: 13px; font-weight: 700; }
+          table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+          th, td { border: 1px solid #111; height: 25px; padding: 4px 6px; }
+          th { font-weight: 700; text-align: center; }
+          th:first-child, td:first-child { width: 24px; text-align: center; }
+          .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 13px; text-align: center; }
+          .signature { border-top: 1px solid #111; padding-top: 5px; font-weight: 700; }
+        </style></head><body><main class="sheet stuffing-page">
+          <header class="header">
+             <div class="logo">
+                <img src="logo.png" alt="Company Logo">
+            </div>
+             <div class="title">
+                  <h1>CONTAINER STUFFING DETAIL</h1>
+                  <p>Sơ đồ đóng container</p>
+              </div>
+
+              <div class="document-code">
+                  Form: __________
+              </div>
+          </header>
+          <section class="info">${fields.map(([label, value]) => `<div class="info-item"><span class="info-label">${label}</span><span>${escapeHtml(value) || '&nbsp;'}</span></div>`).join('')}</section>
+          <section class="fdc-heading">${fdcCards}</section>
+          <section class="details">
+            <div class="detail-panel"><h2 class="detail-title">DETAIL - LEFT</h2><table><thead><tr><th>No.</th><th>Pallet Number</th><th>FDC</th><th>Loại pallet</th></tr></thead><tbody>${detailRows}</tbody></table></div>
+            <div class="detail-panel"><h2 class="detail-title">DETAIL - RIGHT</h2><table><thead><tr><th>No.</th><th>Pallet Number</th><th>FDC</th><th>Loại pallet</th></tr></thead><tbody>${detailRows}</tbody></table></div>
+          </section>
+          <footer class="signatures"><div class="signature">Nhân viên đóng hàng</div><div class="signature">Người kiểm tra</div><div class="signature">Người phê duyệt</div></footer>
+        </main><main class="sheet inspection-page">
+          <div class="inspection-report">
+            <div class="inspection-company">CÔNG TY TNHH KLN INTEGRATED LOGISTICS (VIỆT NAM)</div>
+            <div class="inspection-title">BÁO CÁO KIỂM TRA CONTAINER VÀ XUẤT HÀNG (7 ĐIỂM)</div>
+            <div class="inspection-code">Mã số: KLNVN_AN_NXK-04</div>
+            <section class="inspection-section">
+              <div class="inspection-section-title">PHẦN 1: NHẬN CONTAINER (CONTAINER RECEIVING)</div>
+              <div class="inspection-info">
+                <div><strong>Ngày:</strong> </div><div><strong>Giờ:</strong> </div><div><strong>Nhận xét:</strong> &nbsp;</div> 
+                <div style="min-height: 40px;">&nbsp;</div>
+                <div style="min-height: 40px;">&nbsp;</div>
+                <div style="min-height: 40px;">&nbsp;</div>
+             </div>
+               <tr>
+                 <td colspan="7" class="container-photo">
+                 <b>Chụp ảnh kiểm cont / Container inspection photo:</b>
+                  Yes <span class="check-box"></span>
+                  &nbsp;&nbsp;&nbsp;
+                  No <span class="check-box"></span>
+                 </td>
+              </tr>
+            </section>
+            <section class="inspection-section">
+              <div class="inspection-section-title">PHẦN 2: KIỂM TRA CONTAINER (CONTAINER INSPECTION)</div>
+              <div class="inspection-info">
+                <div><strong>Số Container:</strong> ${escapeHtml(row.container) || '&nbsp;'} </div><div><strong>Số seal:</strong> ${escapeHtml(row.seal) || '&nbsp;'} </div><div><strong>Loại Container: 40HC</strong> &nbsp;</div> 
+                
+              </div>
+              <table class="inspection-table">
+                                <tr>
+                                    <th rowspan="2" style="width:45%">Các điểm kiểm tra cont</th>
+                                    <th rowspan="2" colspan="2" style="width:25%">Có kiểm tra hay không</th>
+                                    <th colspan="3" style="width:30%">Nhận xét </th>
+                                </tr>
+                                <tr>
+                                   
+                                    <th>Tốt</th>
+                                    <th>Bình thường</th>
+                                    <th>Xấu</th>
+                                </tr>
+
+                                <tr>
+                                    <td>Mặt trước</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Mặt trái</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Mặt phải</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Sàn</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Trần</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Kích thước bên trong</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+
+                                <tr>
+                                    <td>Khóa</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+                                <tr>
+                                    <td>Gầm Container</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+                                <tr>
+                                    <td>Mối, mọt , côn trùng, ẩm ướt, nấm mốc,mùi hóa chất, mùi xác động vật, mùi lạ, sinh vật sinh sống hoặc sản phẩm hữu cơ từ động vật (bao gồm vỏ trứng, ấu trùng, máu, xương, lông, thịt, dịch tiết, bài tiết</td>
+                                    <td class="center">Yes</td>
+                                    <td class="center">No</td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="7" style="text-align:right; font-size:12px;">
+                                    <b>Chụp ảnh kiểm container / Container inspection photo:</b>
+                                    Yes <span class="check-box"></span>
+                                    &nbsp;&nbsp;&nbsp;
+                                    No <span class="check-box"></span>
+                                </td>
+                            </tr>
+            </section>
+            <section class="inspection-section">
+              <div class="inspection-section-title">PHẦN 3: LÊN CONTAINER (CONTAINER STUFFING)</div>
+              <table class="inspection-table inspection-table1"><thead><tr><th class="col-date">Ngày</th><th class="col-time">Giờ</th><th class="col-jobno">Jobno</th><th class="col-quantity">Số lượng</th><th class="col-boxes">Số thùng</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+              <table class="table-3">
+                                <colgroup>
+                                    <col span="3" style="width:50%">
+                                    <col span="3" style="width:25%">
+                                    <col span="3" style="width:25%">
+                                </colgroup>
+
+                                <tr>
+                                    <td rowspan="2" colspan="3">Kết quả cân trọng lượng mỗi thùng</td>
+                                    <td colspan="3" class="center">Như nhau</td>
+                                    <td colspan="3" class="center">Không giống nhau</td>
+                                </tr>
+
+                                <tr>
+                                    
+                                    <td colspan="3" class="center">Yes</td>
+                                    <td colspan="3" class="center">No</td>
+                                </tr>
+                                </table>
+              </section>
+              <br></br>
+                                <table class="table-4">
+                                <tr>
+                                    <td style="width: 33.33%; text-align: left; font-weight: bold;">
+                                        Bảo vệ
+                                    </td>
+                                    <td style="width: 33.33%; text-align: center; font-weight: bold;">
+                                        Kho
+                                    </td>
+                                    <td style="width: 33.33%; text-align: right; font-weight: bold;">
+                                        Bộ phận xuất hàng
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="height: 50px;"></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                </table>
+            <section class="inspection-section">
+              <div class="inspection-section-title">PHẦN 4: XUẤT CONTAINER (CONTAINER DISPATCH)</div>
+              <tr>
+                                <td colspan="7" style="text-align:right; font-size:12px;">
+                                    <b>Chụp ảnh kiểm cont / Container inspection photo:</b>
+                                    Yes <span class="check-box"></span>
+                                    &nbsp;&nbsp;&nbsp;
+                                    No <span class="check-box"></span>
+                                </td>
+                            </tr>
+              <table class="inspection-table">
+                <tbody>
+                  <tr>
+                    <td style="width: 20%;">Quy trình</td>
+                    <td style="width: 20%;">Ngày</td>
+                    <td style="width: 30%;">Thời gian hoàn thành</td>
+                    <td style="width: 30%;">Xác nhận bởi</td>
+                    
+                  </tr>
+                  <tr>
+                    <td>Khóa Container</td>
+                    <td></td>
+                    <td></td>
+                    <td>Quản lý kho</td>
+                    
+                  </tr>
+                  <tr>
+                    <td>Ra khỏi cổng</td>
+                    <td></td>
+                    <td></td>
+                    <td>Bảo vệ</td>
+                  </tr>
+                  <tr>
+                    <td>Đến hải quan</td>
+                    <td></td>
+                    <td></td>
+                    <td>Bộ phận lên Container</td>
+                  </tr>
+                  <tr>
+                    <td>Ra khỏi hải quan</td>
+                    <td></td>
+                    <td></td>
+                    <td rowspan="2">Chủ quản bộ phận xuất hàng</td>
+                  </tr>
+                  <tr>
+                    <td>Đến cảng</td>
+                    <td></td>
+                    <td></td>
+                    
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <div class="inspection-signatures"><div class="inspection-signature" style="text-align:center;width:50%;">Tài xế</div><div class="inspection-signature" style="text-align:center;width:50%;">Người kiểm tra</div></div>
+          </div>
+        </main><script>window.addEventListener('load', () => { window.print(); });<\/script></body></html>`);
+        printWindow.document.close();
+      }
+      async function printPickingList(row) {
+        const jobno = row.jobno || '';
+        if (!jobno) return showError('Job No không hợp lệ.');
+        const response = await fetch(`${api}/api/outbound/picking-list?jobno=${encodeURIComponent(jobno)}&connectionString=${encodeURIComponent(connectionString)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải Picking List.');
+        const items = payload.rows || [];
+        const printWindow = window.open('', '_blank', 'width=1200,height=850');
+        if (!printWindow) return showError('Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup rồi thử lại.');
+        const dedupeLocations = value => Array.from(new Set(String(value || '').split(',').map(part => part.trim()).filter(Boolean))).join(', ');
+        const groups = items.reduce((groups, item) => {
+          const fdc = String(item.fdc || '').trim() || 'N/A';
+          (groups[fdc] ||= []).push(item);
+          return groups;
+        }, {});
+        const fdcKeys = Object.keys(groups).sort();
+        let grandCarton = 0; let grandCbm = 0;
+        const sections = fdcKeys.map((fdc, sectionIndex) => {
+          const fdcItems = [...groups[fdc]].sort((a, b) => number(b.weightpersku) - number(a.weightpersku));
+          let subtotalCarton = 0; let subtotalCbm = 0;
+          const bodyRows = fdcItems.map((item, index) => {
+            const carton = number(item.carton);
+            const cbm = number(item.cbm);
+            subtotalCarton += carton; subtotalCbm += cbm;
+            return `<tr><td style="min-width: 2%;">${index + 1}</td><td>${escapeHtml(item.parentpo)}</td><td>${escapeHtml(item.childpo)}</td><td>${escapeHtml(item.sku)}</td><td>${escapeHtml(dedupeLocations(item.location))}</td><td>${carton.toLocaleString('vi-VN')}</td><td>${number(item.cbmpersku).toFixed(3)}</td><td>${cbm.toFixed(3)}</td><td>${escapeHtml(item.chip)}</td><td>${number(item.weightpersku).toFixed(0)}</td></tr>`;
+          }).join('');
+          grandCarton += subtotalCarton; grandCbm += subtotalCbm;
+          const pageBreakStyle = sectionIndex > 0 ? ' style="page-break-before: always;"' : '';
+          return `<section class="fdc-section"${pageBreakStyle}>
+            <h2 class="fdc-title">FDC:<strong>${escapeHtml(fdc)}</strong></h2>
+            <table class="picking-table">
+              <colgroup>
+                <col style="width:4%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+                <col style="width: 20%;">
+                <col style="width: 15%;">
+                <col style="width: 7%;">
+                <col style="width: 7%;">
+                <col style="width: 7%;">
+                <col style="width: 5%;">
+                <col style="width: 5%;">
+              </colgroup>
+              <thead><tr><th style="width: 4%;">No.</th><th style="width: 15%;">Parent PO</th><th style="width: 15%;">Child PO</th><th style="width: 20%;">SKU</th><th style="width: 15%;">Location</th><th style="width: 7%;">Carton</th><th style="width: 7%;">CBM/SKU</th><th style="width: 7%;">CBM</th><th style="width: 5%;">Chip</th><th style="width: 5%;">KG/SKU</th></tr></thead>
+              <tbody>${bodyRows || '<tr><td colspan="10">Không có dữ liệu.</td></tr>'}</tbody>
+              <tfoot><tr><td colspan="5">Tổng FDC ${escapeHtml(fdc)}</td><td>${subtotalCarton.toLocaleString('vi-VN')}</td><td></td><td>${subtotalCbm.toFixed(3)}</td><td></td><td></td></tr></tfoot>
+            </table>
+          </section>`;
+        }).join('');
+        printWindow.document.write(`<!doctype html><html lang="vi"><head><meta charset="UTF-8"><title>Picking List - ${escapeHtml(jobno)}</title><style>
+          @page { size: A4 portrait; margin: 10mm; }
+          * { box-sizing: border-box; }
+          body { margin: 0; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
+          .header { display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; border-bottom: 2px solid #000; padding: 10px 15px; }
+          .logo { display: flex; align-items: center; justify-content: flex-start; }
+          .logo img { max-width: 120px; max-height: 60px; object-fit: contain; }
+          .title { text-align: center; }
+          .title h1 { margin: 0; font-size: 22px; letter-spacing: .4px; }
+          .info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 24px; margin: 12px 15px; }
+          .info-item { display: grid; grid-template-columns: 90px 1fr; min-height: 25px; border-bottom: 1px solid #111; align-items: end; padding-bottom: 4px; }
+          .info-label { font-weight: 700; }
+          .fdc-section { margin: 0 15px 14px; page-break-inside: avoid; }
+          .fdc-title { margin: 0 0 6px; font-size: 14px; }
+          .picking-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+          .picking-table th, .picking-table td { border: 1px solid #111; padding: 4px 5px; text-align: left;overflow:break-word;word-wrap:break-word;box-sizing:border-box; }
+          .picking-table tfoot td { font-weight: 700; background: #f1f5f9; }
+          .grand-total { margin: 10px 15px; font-weight: 700; text-align: right; }
+        </style></head><body>
+          <header class="header">
+            <div class="logo"><img src="logo.png" alt="Company Logo"></div>
+            <div class="title"><h1>PICKING LIST</h1><p>Danh sách lấy hàng</p></div>
+            <div></div>
+          </header>
+          <section class="info">
+            <div class="info-item"><span class="info-label">Job No</span><span>${escapeHtml(jobno) || '&nbsp;'}</span></div>
+            <div class="info-item"><span class="info-label">Container</span><span>${escapeHtml(row.container) || '&nbsp;'}</span></div>
+            <div class="info-item"><span class="info-label">Seal</span><span>${escapeHtml(row.seal) || '&nbsp;'}</span></div>
+            <div class="info-item"><span class="info-label">Ngày</span><span>${escapeHtml(dateOnly(row.datestuff)) || '&nbsp;'}</span></div>
+          </section>
+          ${sections}
+          <div class="grand-total">Tổng cộng: ${grandCarton.toLocaleString('vi-VN')} carton | ${grandCbm.toFixed(3)} CBM</div>
+        <script>window.addEventListener('load', () => { window.print(); });<\/script></body></html>`);
+        printWindow.document.close();
+      }
+      async function exportOutbound(row) {
+        const jobno = String(row.jobno || '').trim();
+        if (!jobno) return showError('Job No không hợp lệ.');
+        const response = await fetch(`${api}/api/outbound/picking-list?jobno=${encodeURIComponent(jobno)}&connectionString=${encodeURIComponent(connectionString)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải dữ liệu outbound.');
+        const columns = [
+          ['parentpo', 'parentpo'],
+          ['childpo', 'childpo'],
+          ['releasekey', 'rsl'],
+          ['sku', 'sku'],
+          ['cbm', 'cbm'],
+          ['carton', 'carton']
+        ];
+        const exportRows = (payload.rows || []).map(item => Object.fromEntries(columns.map(([heading, field]) => [heading, field=='cbm' ? number(item[field] ?? 0).toFixed(3) : item[field] ?? ''])));
+        //Tổng cộng CBM và carton
+        const totalCbm = (payload.rows || []).reduce(
+          (sum,item)=>sum+ Number(item.cbm || 0),0
+        );
+        const totalCarton = (payload.rows || []).reduce(
+          (sum,item)=>sum+ Number(item.carton || 0),0
+        );
+        // Dòng Total
+        exportRows.push({
+          parentpo: 'Total',
+          childpo: '',
+          releasekey: '',
+          sku: '',
+          cbm: totalCbm.toFixed(3),
+          carton: totalCarton
+        });
+        const sheet = XLSX.utils.json_to_sheet(exportRows, { header: columns.map(([heading]) => heading) });
+        sheet['!cols'] = columns.map(() => ({ wch: 18 }));
+        // In đậm dòng Total
+        const totalRowIndex = exportRows.length ;
+        for (let col=0;col<columns.length;col++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: totalRowIndex-1, c: col });
+          if (!sheet[cellAddress]) {
+            sheet[cellAddress].s = { font: { bold: true } };
+          }
+          
+        
+        }
+      
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, 'Outbound');
+        const datePart = getTodayGmt7().replaceAll('-', '_');
+        const suggestedName = `${jobno}`;
+        const chosenName = window.prompt('Tên file outbound', suggestedName);
+        if (chosenName === null) return;
+        const fileName = chosenName.trim().replace(/\.xlsx$/i, '').replace(/[<>:"/\\|?*]/g, '_');
+        if (!fileName) return showError('Tên file không được để trống.');
+        XLSX.writeFile(workbook, `${fileName}.xlsx`);
+      }
+      async function deleteOutboundJob(row) {
+        const jobno = String(row.jobno || '').trim();
+        if (!jobno) return showError('Job No không hợp lệ.');
+        if (!window.confirm(`Bạn có chắc muốn xóa toàn bộ dữ liệu outbound của Job No ${jobno}?`)) return;
+        const response = await fetch(`${api}/api/outbound/job`, { method:'DELETE', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ connectionString, jobno }) });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể xóa Job No outbound.');
+        await loadRows();
+        $('notice').hidden = false;
+        $('notice').style.background = '#ecfdf5';
+        $('notice').style.color = '#065f46';
+        $('notice').textContent = `Đã xóa ${number(payload.deletedRows).toLocaleString('vi-VN')} dòng outbound của Job No ${jobno}.`;
+      }
+      async function exportDateRange(endpoint, fromId, toId, fileName, sheetName, columns) {
+        const fromDate = $(fromId).value;
+        const toDate = $(toId).value;
+        if (!fromDate || !toDate || fromDate > toDate) throw new Error('Vui lòng chọn khoảng ngày hợp lệ.');
+        const response = await fetch(`${api}${endpoint}?fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&connectionString=${encodeURIComponent(connectionString)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải dữ liệu xuất file.');
+        const exportRows = (payload.rows || []).map(row => Object.fromEntries(columns.map(([heading, field, format]) => [heading, format ? format(row[field]) : row[field] ?? ''])));
+        const sheet = XLSX.utils.json_to_sheet(exportRows, { header: columns.map(([heading]) => heading) });
+        sheet['!cols'] = columns.map(([heading]) => ({ wch: Math.max(15, heading.length + 4) }));
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, sheetName);
+        XLSX.writeFile(workbook, `${fileName}_${fromDate}_${toDate}.xlsx`);
+      }
+      function isValidIso6346Container(value) {
+        const container = String(value || '').trim().toUpperCase();
+        if (!/^[A-Z]{4}\d{7}$/.test(container) || !['U', 'J', 'Z'].includes(container[3])) return false;
+        const letterValues = { A:10, B:12, C:13, D:14, E:15, F:16, G:17, H:18, I:19, J:20, K:21, L:23, M:24, N:25, O:26, P:27, Q:28, R:29, S:30, T:31, U:32, V:34, W:35, X:36, Y:37, Z:38 };
+        const sum = [...container.slice(0, 10)].reduce((total, character, index) => total + Number(character in letterValues ? letterValues[character] : character) * (2 ** index), 0);
+        return (sum % 11) % 10 === Number(container[10]);
+      }
+      function openEdit(row) {
+        $('jobnoInput').value = row.jobno || ''; $('newJobnoInput').value = row.jobno || ''; $('containerInput').value = row.container || ''; $('sealInput').value = row.seal || ''; $('datestuffInput').value = dateOnly(row.datestuff); $('planDateInput').value = dateOnly(row.plan_date); $('newJobnoInput').focus();
+      }
+      function renderTable() {
+        const keyword = $('searchJobnoInput').value.trim().toLowerCase();
+        const visibleRows = rows.filter(row => (activeTab === 'withContainer' ? String(row.container || '').trim().length > 0 : !String(row.container || '').trim().length) && (!keyword || String(row.jobno || '').toLowerCase().includes(keyword)));
+        $('outboundBody').innerHTML = visibleRows.map((row, index) => {
+          const hasScanfile = row.has_scanfile === true || Number(row.has_scanfile) === 1;
+          const jobnoClass = activeTab === 'withoutContainer' && hasScanfile ? ' class="jobno-in-scanfile"' : '';
+          return `<tr><td${jobnoClass}>${row.jobno || ''}</td><td>${dateOnly(row.datercv)}</td><td>${row.container || ''}</td><td>${row.seal || ''}</td><td>${dateOnly(row.datestuff)}</td><td>${dateOnly(row.plan_date)}</td><td>${number(row.totalcarton).toLocaleString('vi-VN')}</td><td>${number(row.totalcbm).toFixed(3)}</td><td><button class="ghost" data-edit="${index}" type="button">Cập nhật</button> <button class="ghost" data-print="${index}" type="button">In</button> <button class="ghost" data-picking="${index}" type="button">In Picking List</button> <button class="ghost" data-export="${index}" type="button">Xuất outbound</button> <button class="danger" data-delete="${index}" type="button">Xóa Job No</button></td></tr>`;
+        }).join('') || '<tr><td colspan="9" class="muted">Không có dữ liệu.</td></tr>';
+        $('outboundBody').dataset.rows = JSON.stringify(visibleRows);
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === activeTab));
+      }
+      async function loadRows() {
+        $('notice').hidden = true;
+        const response = await fetch(`${api}/api/outbound/summary?connectionString=${encodeURIComponent(connectionString)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể tải outbound.');
+        const detailsByFdc = (payload.fdcDetails || []).reduce((groups, detail) => {
+          const fdc = String(detail.fdc || '').trim();
+          if (fdc) (groups[fdc] ||= []).push(detail);
+          return groups;
+        }, {});
+        const summaryByFdc = (payload.fdcSummary || []).reduce((groups, summary) => {
+          const fdc = String(summary.fdc || '').trim();
+          if (fdc) (groups[fdc] ||= []).push(summary);
+          return groups;
+        }, {});
+        rows = (payload.rows || []).map(row => ({ ...row, fdcDetails: String(row.fdc || '').split(',').map(value => value.trim()).filter(Boolean).flatMap(fdc => detailsByFdc[fdc] || []), fdcSummary: String(row.fdc || '').split(',').map(value => value.trim()).filter(Boolean).flatMap(fdc => summaryByFdc[fdc] || []) }));
+        $('withContainerCount').textContent = rows.filter(row => String(row.container || '').trim().length > 0).length;
+        $('withoutContainerCount').textContent = rows.length - Number($('withContainerCount').textContent);
+        const containerRows = rows.filter(row => String(row.container || '').trim().length > 0);
+        const today = getTodayGmt7();
+        const weekStart = getWeekStartGmt7();
+        const lastWeekStart = shiftIsoDate(weekStart, -7);
+        const lastWeekEnd = shiftIsoDate(weekStart, -1);
+        const countContainers = values => new Set(values.map(row => String(row.container).trim())).size;
+        $('todayContainerCount').textContent = countContainers(containerRows.filter(row => dateOnly(row.datestuff) === today));
+        $('weekContainerCount').textContent = countContainers(containerRows.filter(row => { const date = dateOnly(row.datestuff); return date >= weekStart && date <= today; }));
+        const withoutContainerRows = rows.filter(row => !String(row.container || '').trim().length);
+        $('withoutContainerCbm').textContent = withoutContainerRows.reduce((sum, row) => sum + number(row.totalcbm), 0).toFixed(3);
+        const weekContainerRows = containerRows.filter(row => { const date = dateOnly(row.datestuff); return date >= weekStart && date <= today; });
+        const weekTotalCbm = weekContainerRows.reduce((sum, row) => sum + number(row.totalcbm), 0);
+        $('fillingRate').textContent = (weekTotalCbm / countContainers(weekContainerRows) || 0).toFixed(3);
+        const lastWeekRows = containerRows.filter(row => { const date = dateOnly(row.datestuff); return date >= lastWeekStart && date <= lastWeekEnd; });
+        const lastWeekTotalCbm = lastWeekRows.reduce((sum, row) => sum + number(row.totalcbm), 0);
+        $('lastWeekCbm').textContent = lastWeekTotalCbm.toFixed(3);
+        $('lastWeekFillingRate').textContent = (lastWeekTotalCbm / countContainers(lastWeekRows) || 0).toFixed(3);
+        renderTable();
+      }
+      document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => { activeTab = tab.dataset.tab; renderTable(); }));
+      $('outboundBody').addEventListener('click', event => {
+        const visibleRows = JSON.parse($('outboundBody').dataset.rows);
+        const editIndex = Number(event.target.dataset.edit);
+        const printIndex = Number(event.target.dataset.print);
+        const pickingIndex = Number(event.target.dataset.picking);
+        const exportIndex = Number(event.target.dataset.export);
+        const deleteIndex = Number(event.target.dataset.delete);
+        if (Number.isInteger(editIndex)) openEdit(visibleRows[editIndex]);
+        if (Number.isInteger(printIndex)) printContainerStuffing(visibleRows[printIndex]);
+        if (Number.isInteger(pickingIndex)) printPickingList(visibleRows[pickingIndex]).catch(error => showError(error.message));
+        if (Number.isInteger(exportIndex)) exportOutbound(visibleRows[exportIndex]).catch(error => showError(error.message));
+        if (Number.isInteger(deleteIndex)) deleteOutboundJob(visibleRows[deleteIndex]).catch(error => showError(error.message));
+      });
+      $('searchJobnoInput').addEventListener('input', renderTable);
+      $('containerInput').addEventListener('input', event => { event.target.value = event.target.value.toUpperCase().replace(/\s/g, ''); });
+      $('containerExportForm').addEventListener('submit', event => {
+        event.preventDefault();
+        exportDateRange('/api/outbound/export-by-container', 'containerExportFrom', 'containerExportTo', 'outbound_by_container', 'Theo container', [
+          ['Ngày đóng hàng', 'datestuff'],
+          ['Số container', 'container'],
+          ['Nhân viên', 'nhanvien'],
+          ['Tổng CBM', 'totalcbm', value => number(value).toFixed(3)],
+          ['Tổng Carton', 'totalcarton', number]
+        ]).catch(error => showError(error.message));
+      });
+      $('chipboardExportForm').addEventListener('submit', event => {
+        event.preventDefault();
+        exportDateRange('/api/outbound/export-chipboard', 'chipboardExportFrom', 'chipboardExportTo', 'outbound_chipboard', 'Chipboard', [
+          ['SKU', 'sku'],
+          ['Chipboard', 'chipboard'],
+          ['Tổng CBM', 'totalcbm', value => number(value).toFixed(3)]
+        ]).catch(error => showError(error.message));
+      });
+      $('jobForm').addEventListener('submit', event => {
+        event.preventDefault();
+        const jobno = $('jobnoInput').value.trim(); const newJobno = $('newJobnoInput').value.trim(); const container = $('containerInput').value.trim(); const seal = $('sealInput').value.trim(); const datestuff = $('datestuffInput').value; const plan_date = $('planDateInput').value;
+        if (!jobno || !newJobno) return showError('Vui lòng chọn Job No cần cập nhật.');
+        if (container && !isValidIso6346Container(container)) return showError('Số container không đúng chuẩn ISO 6346.');
+        fetch(`${api}/api/outbound/job`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ connectionString, jobno, newJobno, container, seal, datestuff,plan_date }) })
+          .then(response => response.json().then(payload => ({ response, payload })))
+          .then(({ response, payload }) => { if (!response.ok || !payload.ok) throw new Error(payload.message || 'Không thể cập nhật Job No.'); return loadRows().then(() => { $('notice').hidden = false; $('notice').textContent = `Đã cập nhật thành công ${payload.affectedRows} dòng outbound.`; $('notice').style.background = '#ecfdf5'; $('notice').style.color = '#065f46'; }); })
+          .catch(error => showError(error.message));
+      });
+      $('refreshBtn').addEventListener('click', () => loadRows().catch(error => showError(error.message)));
+      loadRows().catch(error => showError(error.message));
+    </script>
+  </body>
+</html>
